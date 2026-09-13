@@ -35,24 +35,31 @@ três seções:
 - **Benefícios** — por que modelar dessa forma (Silver L1 vs L2, Integration,
   Analytics em português, alinhamento com bounded contexts, escalabilidade).
 - **Estudo de Caso** — narrativa do piloto Compras/Autorização (pipeline
-  Bronze→Silver L1/L2→Gold, produtos propostos, ressalvas registradas nos
-  ADRs) com link para o mapa interativo.
+  Bronze→Silver L1/L2→Gold, contagem real de tabelas físicas por camada, os
+  13 produtos de dados propostos com descrição, ressalvas registradas nos
+  ADRs) com link para o mapa interativo — produtos e contagens lidos de
+  `catalog/compras-autorizacao/catalog.yaml` e `mapeamento-tecnico.yaml`, não
+  hardcoded no template.
 
 ### Como Regenerar
 
-Se `catalog/index.yaml` ou algum `catalog/<slug>/catalog.yaml` for editado,
-regenere com:
+Se `catalog/index.yaml`, algum `catalog/<slug>/catalog.yaml` ou
+`catalog/compras-autorizacao/mapeamento-tecnico.yaml` for editado, regenere
+com:
 
 ```bash
 python3 scripts/build_apresentacao_executiva.py
 ```
 
-O script lê `catalog/index.yaml` (dados dos subdomínios) e, para cada um,
+O script lê `catalog/index.yaml` (dados dos subdomínios), para cada um
 `catalog/<slug>/catalog.yaml` (camadas Core/Integration/Analytics já
-propostas), injetando o grid em `apresentacao-executiva.template.html` e
-escrevendo `apresentacao-executiva.html`. O restante do conteúdo (conceitos,
-benefícios, narrativa do estudo de caso) é texto estático no template —
-editar o `.template.html` diretamente e regerar.
+propostas) e, para o estudo de caso, `catalog/compras-autorizacao/catalog.yaml`
+(lista completa de produtos) e `mapeamento-tecnico.yaml` (contagem de
+tabelas físicas por camada medalhão) — injetando tudo em
+`apresentacao-executiva.template.html` e escrevendo
+`apresentacao-executiva.html`. O restante do conteúdo (conceitos,
+benefícios, texto introdutório do estudo de caso) é texto estático no
+template — editar o `.template.html` diretamente e regerar.
 
 ### Verificação
 

@@ -1,17 +1,20 @@
-# 0009 — Grid de subdomínios por camada de produto, página única, sem emojis
+# 0009 — Grid de subdomínios por camada de produto, página única, sem emojis, estudo de caso completo
 
 ## Status
 
-Aceito — supersede parcialmente [0008](./0008-apresentacao-executiva-como-ferramenta-separada.md)
-(a forma como o grid de subdomínios e a navegação da apresentação executiva
-foram implementados)
+Proposto
+
+> Ajustes pedidos pelo usuário depois de revisar a apresentação executiva
+> gerada pela PR #9 — ainda em rodada de revisão, atualizado neste mesmo
+> arquivo até ser aceito (mesmo padrão do [ADR 0008](./0008-apresentacao-executiva-como-ferramenta-separada.md)
+> antes de virar `Aceito`).
 
 ## Contexto
 
 Depois da aceitação da PR #9 (que implementou o [ADR 0008](./0008-apresentacao-executiva-como-ferramenta-separada.md)),
-o usuário revisou a apresentação executiva gerada e pediu três ajustes:
+o usuário revisou a apresentação executiva gerada e pediu quatro ajustes:
 
-1. O grid "Os 15 Subdomínios" (aba/seção Forma de Modelar) mostrava tags
+1. O grid "Os 15 Subdomínios" (seção Forma de Modelar) mostrava tags
    `Core`/`Support`/`Generic` — a classificação **DDD** de importância
    estratégica de cada subdomínio ([`kb/ddd.md`](../../kb/ddd.md)). O usuário
    apontou que a apresentação precisa mostrar os nomes acordados **Core,
@@ -25,6 +28,11 @@ o usuário revisou a apresentação executiva gerada e pediu três ajustes:
    página única, com rolagem contínua.
 3. Remover emojis do conteúdo (título, callout, ícones dos cards de
    benefício) para um tom mais profissional.
+4. A seção Estudo de Caso estava incompleta: o diagrama de pipeline mostrava
+   só 4 das 29 tabelas físicas do piloto (só o rail de crédito), e a lista de
+   "Produtos de dados propostos" citava só 3 dos 13 produtos do catálogo,
+   resumindo o resto como "e outros". O usuário sinalizou que faltavam
+   tabelas.
 
 ## Decisão
 
@@ -50,6 +58,24 @@ o usuário revisou a apresentação executiva gerada e pediu três ajustes:
   desambiguação, ícones dos cards de Benefícios). Setas (`→`) são mantidas —
   não são emoji, e já são convenção do repositório para notação de pipeline
   (ex: [`kb/camada-medalhao.md`](../../kb/camada-medalhao.md)).
+- A seção Estudo de Caso passa a ser parcialmente data-driven, em vez de
+  texto hardcoded: `scripts/build_apresentacao_executiva.py` lê
+  `catalog/compras-autorizacao/catalog.yaml` (os 13 produtos, com descrição
+  real) e `mapeamento-tecnico.yaml` (contagem de tabelas físicas por camada
+  medalhão), disponibilizando `DATA.estudo_caso` no template.
+  - A lista "Produtos de dados propostos" renderiza todos os 13 produtos
+    (não mais 3 + "e outros"), agrupados por camada com a descrição de
+    `catalog.yaml`.
+  - Uma linha de estatísticas (`29 tabelas físicas · 12 Bronze · 2 Silver L1
+    · 2 Silver L2 · 2 Silver · 11 Gold`) mostra a contagem real de tabelas do
+    piloto, deixando explícito que o diagrama ilustrativo abaixo do texto
+    (4 caixas, rail de crédito) é só um exemplo, não a lista completa.
+  - O diagrama de pipeline continua mostrando só o rail de crédito como
+    exemplo (não os 29 nós) — reconstruir o diagrama completo aqui
+    duplicaria `presentation/parque-de-dados.html`, o que os ADRs 0002/0008
+    já decidiram evitar. O texto acima do diagrama agora descreve os dois
+    rails (crédito e débito) e as tabelas de parcelamento por extenso, e o
+    CTA para o mapa interativo usa a contagem real de tabelas.
 
 ## Consequências
 
@@ -66,3 +92,8 @@ o usuário revisou a apresentação executiva gerada e pediu três ajustes:
   piloto) — se um subdomínio ficar sem esse arquivo, o build falha (mesma
   checagem estrita que os demais scripts do repositório já aplicam aos
   arquivos que leem).
+- O script também passa a depender de
+  `catalog/compras-autorizacao/mapeamento-tecnico.yaml` para o estudo de
+  caso — se esse arquivo mudar de forma (ex: `tabelas_fisicas` renomeado), o
+  build da apresentação executiva quebra junto com o do mapa
+  (`build_mapa_parque_dados.py`), que já lê o mesmo arquivo.
