@@ -10,6 +10,12 @@ No domínio Cartão, cada linha da aba "Subdomínios" é um bounded context — 
 
 Cada bounded context pode ter um dono técnico, definir sua própria linguagem ubíqua (ver próxima seção) e evoluir de forma independente dos outros.
 
+### Por que isso importa pra engenharia de dados
+
+Bounded context não é só um agrupamento conceitual — na prática, ele tende a ser a **fronteira de ownership de pipeline**. Cada bounded context normalmente tem seu próprio sistema de origem, seu próprio time responsável, e alimenta seu próprio [produto de dados](./produto-de-dados.md) Core (ex: o bounded context "Compras / Autorização" alimenta `core_credit_purchase` e `core_debit_purchase`).
+
+Isso importa na hora de desenhar pipeline: um produto Core não deveria misturar dados de dois bounded contexts diferentes (isso já seria um produto Integration — ver [core-integration-analytics.md](./core-integration-analytics.md)), e uma mudança de schema dentro de um bounded context é decisão do dono daquele contexto, não de quem consome o dado a partir de Integration ou Analytics.
+
 ---
 
 ## Subdomínio: Core / Support / Generic

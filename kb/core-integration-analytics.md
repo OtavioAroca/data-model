@@ -2,6 +2,8 @@
 
 ## Visão geral
 
+Este arquivo assume que você já sabe o que é um produto de dados — se não, comece por [produto-de-dados.md](./produto-de-dados.md).
+
 A classificação **Core / Integration / Analytics** agrupa produtos de dados (as linhas da aba "Catálogo V0") por **escopo de negócio** — quantos bounded contexts (subdomínios) cada produto cruza e para quem ele foi moldado.
 
 Cada camada tem um contrato, um dono, consumidores e uma cadência de atualização bem definidos.

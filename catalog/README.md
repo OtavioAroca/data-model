@@ -25,7 +25,7 @@ Alguns subdomínios provavelmente têm produtos adicionais que só quem opera o 
 | **Integration** | Produto que cruza mais de um bounded context |
 | **Analytics** | Produto moldado para um caso de uso de consumo final |
 
-Para entender os conceitos — DDD, Bounded Context, Camada Medalhão (Bronze/Silver/Gold) e a distinção entre Core/Integration/Analytics — ver [Conhecimento Base (KB)](../kb/README.md).
+Para entender os conceitos — o que é um produto de dados, DDD, Bounded Context, Camada Medalhão (Bronze/Silver/Gold) e a distinção entre Core/Integration/Analytics — ver [Conhecimento Base (KB)](../kb/README.md).
 
 ### Contrato e Validação
 
