@@ -25,6 +25,7 @@ supersede o anterior (linkando de volta), preservando o histórico de raciocíni
 | [0005](./0005-fk-sem-cardinalidade-explicita.md) | Relação estrutural sem cardinalidade explícita | Aceito |
 | [0006](./0006-mapa-sem-outros-subdominios-e-sem-chips-externos.md) | Mapa cobre só a rede de tabelas de Compras/Autorização, sem outros subdomínios nem chips externos | Superseded parcialmente por [0007](./0007-integration-purchase-journey-sem-disputas.md) |
 | [0007](./0007-integration-purchase-journey-sem-disputas.md) | integration_purchase_journey sem estorno/lineage de Disputas | Aceito |
+| [0008](./0008-apresentacao-executiva-como-ferramenta-separada.md) | Apresentação executiva como ferramenta separada, linkando o mapa do parque de dados | Proposto |
 
 ## Quando criar um novo ADR
 

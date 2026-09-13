@@ -1,0 +1,363 @@
+<meta charset="utf-8" />
+<title>Modelagem de Dados — Domínio Cartão</title>
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --panel-bg: #ffffff;
+    --text: #1f2328;
+    --text-muted: #6b7280;
+    --border: #e2e2e0;
+    --accent: #2563eb;
+    --layer-bronze: #b45309;
+    --layer-silver-l1: #64748b;
+    --layer-silver-l2: #475569;
+    --layer-silver: #94a3b8;
+    --layer-gold: #ca8a04;
+    --edge-lineage: #2563eb;
+    --edge-relacional: #9333ea;
+    --ddd-core: #b45309;
+    --ddd-support: #2563eb;
+    --ddd-generic: #6b7280;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14161a;
+      --panel-bg: #1c1f26;
+      --text: #e6e8eb;
+      --text-muted: #9aa1ac;
+      --border: #2c313a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161a;
+    --panel-bg: #1c1f26;
+    --text: #e6e8eb;
+    --text-muted: #9aa1ac;
+    --border: #2c313a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  header {
+    padding: 22px 24px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel-bg);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header h1 { font-size: 20px; margin: 0 0 4px; }
+  header p { margin: 0 0 16px; color: var(--text-muted); font-size: 13px; }
+
+  nav.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  nav.tabs button {
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  nav.tabs button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  main { max-width: 980px; margin: 0 auto; padding: 28px 24px 60px; }
+  section.tab-panel { display: none; }
+  section.tab-panel.active { display: block; }
+
+  h2 { font-size: 18px; margin: 0 0 6px; }
+  h2 .kicker { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+  .lede { color: var(--text-muted); margin: 0 0 24px; max-width: 720px; }
+
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 20px; }
+  @media (max-width: 720px) { .grid-3, .grid-2 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .card h3 { margin: 0 0 6px; font-size: 14px; }
+  .card p { margin: 0; color: var(--text-muted); }
+  .card.medalhao { border-left-color: var(--layer-gold); }
+  .card.cia { border-left-color: #9333ea; }
+
+  .callout {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+  }
+  .callout strong { display: block; margin-bottom: 4px; }
+
+  table.disambig { width: 100%; border-collapse: collapse; margin-bottom: 28px; font-size: 13px; }
+  table.disambig th, table.disambig td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  table.disambig th { background: var(--panel-bg); font-weight: 700; }
+  table.disambig td { color: var(--text-muted); }
+
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .filter-btn { border: 1px solid var(--border); background: var(--panel-bg); color: var(--text); border-radius: 999px; padding: 5px 12px; font-size: 12px; cursor: pointer; }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .sub-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  @media (max-width: 900px) { .sub-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { .sub-grid { grid-template-columns: 1fr; } }
+
+  .sub-card {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    transition: opacity 0.15s;
+  }
+  .sub-card.dimmed { opacity: 0.3; }
+  .sub-card h4 { margin: 0 0 4px; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+  .sub-card p { margin: 0 0 4px; color: var(--text-muted); font-size: 12px; }
+  .sub-card .origem { font-size: 11px; color: var(--text-muted); }
+  .ddd-tag { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; color: #fff; text-transform: uppercase; }
+  .ddd-tag.core { background: var(--ddd-core); }
+  .ddd-tag.support { background: var(--ddd-support); }
+  .ddd-tag.generic { background: var(--ddd-generic); }
+
+  .benefit-card .icon { font-size: 20px; margin-bottom: 4px; display: block; }
+
+  .pipeline-flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0 22px; font-family: ui-monospace, monospace; font-size: 12px; }
+  .pipeline-flow .stage { border: 1px solid var(--border); background: var(--panel-bg); border-radius: 6px; padding: 6px 10px; }
+  .pipeline-flow .stage.bronze { border-left: 3px solid var(--layer-bronze); }
+  .pipeline-flow .stage.silver-l1 { border-left: 3px solid var(--layer-silver-l1); }
+  .pipeline-flow .stage.silver-l2 { border-left: 3px solid var(--layer-silver-l2); }
+  .pipeline-flow .stage.gold { border-left: 3px solid var(--layer-gold); }
+  .pipeline-flow .arrow { color: var(--text-muted); }
+
+  ul.produtos { list-style: none; margin: 0 0 20px; padding: 0; display: grid; gap: 8px; }
+  ul.produtos li { border: 1px solid var(--border); background: var(--panel-bg); border-radius: 8px; padding: 10px 12px; }
+  ul.produtos code { font-size: 12px; }
+  ul.produtos .desc { color: var(--text-muted); font-size: 12.5px; margin-top: 2px; }
+  .camada-tag { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; color: #fff; text-transform: uppercase; margin-right: 8px; }
+  .camada-tag.core-p { background: var(--accent); }
+  .camada-tag.integration-p { background: #9333ea; }
+  .camada-tag.analytics-p { background: var(--layer-gold); }
+
+  ul.ressalvas { margin: 0 0 24px; padding-left: 18px; color: var(--text-muted); font-size: 13px; }
+  ul.ressalvas li { margin-bottom: 6px; }
+  ul.ressalvas a { color: var(--accent); }
+
+  .map-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .map-cta-wrap { border: 1px dashed var(--border); border-radius: 10px; padding: 16px; text-align: center; }
+  .map-cta-wrap p { color: var(--text-muted); margin: 0 0 12px; font-size: 12.5px; }
+</style>
+
+<header>
+  <h1>📊 Modelagem de Dados — Domínio Cartão</h1>
+  <p>Como pensamos em modelar, por que modelamos assim, e um exemplo de caso de uso (Compras/Autorização).</p>
+  <nav class="tabs">
+    <button data-tab="modelagem" class="active">Forma de Modelar</button>
+    <button data-tab="beneficios">Benefícios</button>
+    <button data-tab="estudo-caso">Estudo de Caso</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ===================== FORMA DE MODELAR ===================== -->
+  <section class="tab-panel active" id="tab-modelagem">
+    <h2><span class="kicker">Forma de Modelar</span>Três eixos de classificação, independentes entre si</h2>
+    <p class="lede">Cada produto de dados do domínio Cartão é classificado ao mesmo tempo por três lentes diferentes — a que negócio ele pertence, em que estágio de processamento está, e para quem foi moldado. Nenhuma das três decide as outras duas.</p>
+
+    <div class="grid-3">
+      <div class="card">
+        <h3>Domain-Driven Design (DDD)</h3>
+        <p>Organiza o domínio em <strong>bounded contexts</strong> (15 subdomínios do Cartão) e classifica cada um por importância estratégica: <strong>Core</strong> (diferencial competitivo), <strong>Support</strong> (necessário, não diferencial) ou <strong>Generic</strong> (solução de mercado).</p>
+      </div>
+      <div class="card medalhao">
+        <h3>Camada Medalhão</h3>
+        <p>Estrutura o data lake por estágio de processamento: <strong>Bronze</strong> (bruto), <strong>Silver</strong> (limpo — com a nuance L1 histórico / L2 estado atual) e <strong>Gold</strong> (pronto para consumo).</p>
+      </div>
+      <div class="card cia">
+        <h3>Core / Integration / Analytics</h3>
+        <p>Classifica cada <strong>produto de dados</strong> pelo escopo: <strong>Core</strong> (1 bounded context), <strong>Integration</strong> (cruza ≥2 contextos) ou <strong>Analytics</strong> (moldado para um caso de uso final).</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>⚠️ Atenção: "Core" significa três coisas diferentes aqui</strong>
+      A mesma palavra aparece nos três eixos, com significados distintos — evita confusão saber qual está em jogo:
+    </div>
+    <table class="disambig">
+      <thead><tr><th>Onde aparece</th><th>O que significa</th><th>Exemplo</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>DDD — subdomínio</td>
+          <td>O bounded context é um diferencial competitivo do negócio.</td>
+          <td>Elegibilidade, Fraude, Compras/Autorização</td>
+        </tr>
+        <tr>
+          <td>Camada Medalhão</td>
+          <td>Não existe "Core" nesta camada — os estágios são Bronze/Silver/Gold.</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Produto de dados</td>
+          <td>O produto representa exatamente 1 bounded context, sem cruzar com outros.</td>
+          <td><code>core_credit_purchase</code> (só crédito, sem débito)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 style="margin-top:8px;">Os 15 Subdomínios do Domínio Cartão</h2>
+    <p class="lede">Cada card é um bounded context: o que ele resolve, quem alimenta, e sua classificação DDD.</p>
+    <div class="filter-bar" id="ddd-filters">
+      <button class="filter-btn active" data-filter="all">Todos</button>
+      <button class="filter-btn" data-filter="Core">Core</button>
+      <button class="filter-btn" data-filter="Support">Support</button>
+      <button class="filter-btn" data-filter="Generic">Generic</button>
+    </div>
+    <div class="sub-grid" id="sub-grid"></div>
+  </section>
+
+  <!-- ===================== BENEFÍCIOS ===================== -->
+  <section class="tab-panel" id="tab-beneficios">
+    <h2><span class="kicker">Benefícios</span>Por que modelar dessa forma</h2>
+    <p class="lede">Cada decisão de modelagem existe para resolver um problema concreto de custo, velocidade ou alinhamento com o negócio — não é estrutura pela estrutura.</p>
+
+    <div class="grid-2">
+      <div class="card benefit-card">
+        <span class="icon">🎯</span>
+        <h3>Alinhamento com o negócio</h3>
+        <p>Cada bounded context tem dono, linguagem própria e fronteira de responsabilidade claras — a estrutura técnica espelha a estrutura organizacional, em vez de competir com ela.</p>
+      </div>
+      <div class="card benefit-card">
+        <span class="icon">💾</span>
+        <h3>Silver L1 e L2 não são redundância</h3>
+        <p>Manter histórico completo (L1) separado do estado atual materializado (L2) evita recalcular a regra de precedência de negócio a cada leitura. Auditoria lê L1; operação lê L2 — cada público paga só pelo custo que precisa.</p>
+      </div>
+      <div class="card benefit-card">
+        <span class="icon">🔗</span>
+        <h3>Integration evita integrações N×M</h3>
+        <p>Sem um produto Integration que padroniza schema entre bounded contexts, cada consumidor teria que cruzar os mesmos contextos de forma independente — N consumidores × M fontes. Um produto Integration resolve isso uma vez.</p>
+      </div>
+      <div class="card benefit-card">
+        <span class="icon">🌍</span>
+        <h3>Analytics em português, Core/Integration em inglês</h3>
+        <p>Quem consome Analytics é risco, marketing, financeiro — não engenharia. Nomear em português remove uma tradução mental a cada consulta, sem abrir mão de convenção técnica onde o público é técnico.</p>
+      </div>
+      <div class="card benefit-card">
+        <span class="icon">🔍</span>
+        <h3>Catálogo reduz descoberta ad-hoc</h3>
+        <p>Produto de dados = dono, contrato e consumidores documentados no catálogo — não uma tabela órfã que alguém precisa perguntar no chat quem mantém.</p>
+      </div>
+      <div class="card benefit-card">
+        <span class="icon">📈</span>
+        <h3>Escala subdomínio por subdomínio</h3>
+        <p>Cada bounded context tem sua própria pasta de catálogo. Um novo time de domínio se integra adicionando a sua, sem reescrever o que já existe para os outros 14.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ESTUDO DE CASO ===================== -->
+  <section class="tab-panel" id="tab-estudo-caso">
+    <h2><span class="kicker">Estudo de Caso</span>Compras / Autorização</h2>
+    <p class="lede">Subdomínio Core escolhido como piloto por ser o mais crítico do fluxo de cartão: autoriza e captura toda transação, incluindo o parcelamento decidido no ato da compra.</p>
+
+    <h3 style="font-size:14px; margin-bottom:8px;">Pipeline: Bronze → Silver L1/L2 → Gold</h3>
+    <div class="pipeline-flow">
+      <span class="stage bronze">bronze.purchases__credit_approved</span>
+      <span class="arrow">→</span>
+      <span class="stage silver-l1">silver_l1.purchases__credit_purchase<br><small>(histórico, N por compra)</small></span>
+      <span class="arrow">→</span>
+      <span class="stage silver-l2">silver_l2.purchases__credit_purchase<br><small>(estado atual, 1 por compra)</small></span>
+      <span class="arrow">→</span>
+      <span class="stage gold">gold.integration__purchase_journey</span>
+    </div>
+
+    <h3 style="font-size:14px; margin-bottom:8px;">Produtos de dados propostos</h3>
+    <ul class="produtos">
+      <li><span class="camada-tag core-p">Core</span><code>core_credit_purchase</code> / <code>core_debit_purchase</code><div class="desc">Ciclo de vida da compra por rail (crédito e débito separados), cada um isolado no seu bounded context.</div></li>
+      <li><span class="camada-tag integration-p">Integration</span><code>integration_purchase_journey</code><div class="desc">Une crédito + débito num único grão de compra, com parcelas relacionadas — schema padronizado para Risco, Fraude e Atendimento.</div></li>
+      <li><span class="camada-tag analytics-p">Analytics</span><code>analytics_taxa_aprovacao_compra</code>, <code>analytics_extrato_cliente</code>, <code>analytics_comportamento_gasto</code> e outros<div class="desc">Moldados para casos de uso finais (risco, marketing, atendimento, compliance), nomeados em português.</div></li>
+    </ul>
+
+    <h3 style="font-size:14px; margin-bottom:8px;">Ressalvas do piloto</h3>
+    <ul class="ressalvas">
+      <li>Só Compras/Autorização tem schema físico completo hoje — os outros 14 subdomínios ainda são placeholders no catálogo (<a href="../docs/adr/0001-escopo-detalhado-so-compras-autorizacao.md" target="_blank">ADR 0001</a>, <a href="../docs/adr/0006-mapa-sem-outros-subdominios-e-sem-chips-externos.md" target="_blank">ADR 0006</a>).</li>
+      <li>Relações estruturais (chaves estrangeiras) são declaradas sem cardinalidade explícita (<a href="../docs/adr/0003-fk-e-cardinalidade-explicitas-no-schema-fisico.md" target="_blank">ADR 0003</a>, <a href="../docs/adr/0005-fk-sem-cardinalidade-explicita.md" target="_blank">ADR 0005</a>).</li>
+      <li><code>integration_purchase_journey</code> ainda não inclui estorno/lineage de Disputas (<a href="../docs/adr/0007-integration-purchase-journey-sem-disputas.md" target="_blank">ADR 0007</a>).</li>
+    </ul>
+
+    <div class="map-cta-wrap">
+      <p>Para explorar as 29 tabelas físicas, colunas, lineage e relações deste piloto interativamente:</p>
+      <a class="map-cta" href="parque-de-dados.html" target="_blank" rel="noopener">Abrir mapa interativo →</a>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/*__APRESENTACAO_EXECUTIVA_DATA__*/
+
+function ddaTagClass(tipo) {
+  return { Core: "core", Support: "support", Generic: "generic" }[tipo] || "generic";
+}
+
+function renderSubGrid() {
+  const container = document.getElementById("sub-grid");
+  container.innerHTML = DATA.subdominios.map(sub => `
+    <div class="sub-card" data-ddd="${sub.tipo_ddd}">
+      <h4>${sub.nome}<span class="ddd-tag ${ddaTagClass(sub.tipo_ddd)}">${sub.tipo_ddd}</span></h4>
+      <p>${sub.bounded_context}</p>
+      <div class="origem">Origem: ${sub.sistemas_origem}${sub.tem_mapeamento_tecnico ? " · piloto com schema físico" : ""}</div>
+    </div>
+  `).join("");
+}
+
+function setupFilters() {
+  const buttons = document.querySelectorAll("#ddd-filters .filter-btn");
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      buttons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      const filter = btn.dataset.filter;
+      document.querySelectorAll("#sub-grid .sub-card").forEach(card => {
+        card.classList.toggle("dimmed", filter !== "all" && card.dataset.ddd !== filter);
+      });
+    });
+  });
+}
+
+function setupTabs() {
+  const tabButtons = document.querySelectorAll("nav.tabs button");
+  tabButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      tabButtons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.querySelectorAll("section.tab-panel").forEach(panel => {
+        panel.classList.toggle("active", panel.id === `tab-${btn.dataset.tab}`);
+      });
+    });
+  });
+}
+
+renderSubGrid();
+setupFilters();
+setupTabs();
+</script>

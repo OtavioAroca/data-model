@@ -16,7 +16,7 @@ catalog/            Catálogo de produtos de dados por subdomínio (15 subdomín
     └── schema-fisico/               DDL, colunas, simulação de dados e banco mock (quando disponível)
 
 kb/                  Base de conhecimento com os conceitos fundamentais (DDD, Camada Medalhão, Core/Integration/Analytics)
-presentation/                Mapa interativo do parque de dados (HTML, offline, zero build) gerado a partir do catálogo
+presentation/                Apresentação executiva e mapa interativo do parque de dados (HTML, offline, zero build) gerados a partir do catálogo
 scripts/             Scripts Python de build, validação, geração de DDL e simulação de dados
 docs/adr/            Registros de decisão arquitetural (ADR)
 ```
@@ -28,7 +28,7 @@ Hoje, **Compras/Autorização** é o único subdomínio com mapeamento técnico 
 - **Entender os conceitos**: [`kb/README.md`](kb/README.md)
 - **Ver o catálogo e como usá-lo**: [`catalog/README.md`](catalog/README.md)
 - **Adicionar/validar um subdomínio, mapeamento técnico ou schema físico**: [`catalog/_schema/README.md`](catalog/_schema/README.md)
-- **Ver o mapa interativo do parque de dados**: [`presentation/README.md`](presentation/README.md)
+- **Ver a apresentação executiva e o mapa interativo do parque de dados**: [`presentation/README.md`](presentation/README.md)
 - **Ver as decisões arquiteturais**: [`docs/adr/README.md`](docs/adr/README.md)
 
 ## Setup
@@ -51,6 +51,9 @@ python3 scripts/simulate_data.py --subdominio <slug> --n 50
 
 # Regenerar o mapa do parque de dados (presentation/parque-de-dados.html)
 python3 scripts/build_mapa_parque_dados.py
+
+# Regenerar a apresentação executiva (presentation/apresentacao-executiva.html)
+python3 scripts/build_apresentacao_executiva.py
 ```
 
 ## Subdomínios do domínio Cartão
