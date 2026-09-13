@@ -13,8 +13,8 @@
     --layer-silver-l2: #475569;
     --layer-silver: #94a3b8;
     --layer-gold: #ca8a04;
-    --edge-lineage: #2563eb;
-    --edge-relacional: #9333ea;
+    --edge-lineage: #3b82f6;
+    --edge-relacional: #c026d3;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -23,6 +23,8 @@
       --text: #e6e8eb;
       --text-muted: #9aa1ac;
       --border: #2c313a;
+      --edge-lineage: #60a5fa;
+      --edge-relacional: #e879f9;
     }
   }
   :root[data-theme="dark"] {
@@ -31,6 +33,8 @@
     --text: #e6e8eb;
     --text-muted: #9aa1ac;
     --border: #2c313a;
+    --edge-lineage: #60a5fa;
+    --edge-relacional: #e879f9;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
@@ -82,6 +86,9 @@
   .toolbar button.reset { border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
 
   .filters { display: flex; gap: 8px; align-items: center; }
+  .legend { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-left: auto; }
+  .legend-item { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
   .dropdown { position: relative; }
   .dropdown-btn {
     border: 1px solid var(--border);
@@ -121,15 +128,20 @@
   .table-card.external { fill: transparent; stroke-dasharray: 4 3; opacity: 0.6; }
   .table-title { font-size: 11px; font-weight: 600; fill: var(--text); pointer-events: none; }
   .table-sub { font-size: 9.5px; fill: var(--text-muted); pointer-events: none; }
-  .layer-header { font-size: 12px; font-weight: 700; fill: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
 
-  .edge-lineage { fill: none; stroke: var(--edge-lineage); stroke-width: 2.4; opacity: 0.85; }
-  .edge-lineage.dashflow { stroke-dasharray: 6 6; animation: dashflow 1.1s linear infinite; }
-  .edge-lineage.dimmed { opacity: 0.08; }
-  @keyframes dashflow { to { stroke-dashoffset: -24; } }
-  .edge-relacional { fill: none; stroke: var(--edge-relacional); stroke-width: 1.3; stroke-dasharray: 2 3; opacity: 0.8; }
+  .edge-lineage {
+    fill: none; stroke: var(--edge-lineage); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+    opacity: 0.8; filter: drop-shadow(0 0 2px color-mix(in srgb, var(--edge-lineage) 55%, transparent));
+  }
+  .edge-lineage.dashflow { stroke-dasharray: 3 6; animation: dashflow 0.9s linear infinite; }
+  .edge-lineage.dimmed { opacity: 0.08; filter: none; }
+  @keyframes dashflow { to { stroke-dashoffset: -18; } }
+  .edge-relacional {
+    fill: none; stroke: var(--edge-relacional); stroke-width: 1.6; stroke-linecap: round;
+    stroke-dasharray: 0.1 6.5; opacity: 0.55;
+  }
   .edge-relacional.dimmed { opacity: 0.06; }
-  .flow-dot { fill: var(--edge-lineage); }
+  .flow-dot { fill: var(--edge-lineage); filter: drop-shadow(0 0 3px color-mix(in srgb, var(--edge-lineage) 70%, transparent)); }
 
   .table-card-group { cursor: grab; }
   .expand-toggle { cursor: pointer; }
@@ -178,6 +190,8 @@
     <input type="search" id="search-input" placeholder="Buscar tabela…" />
 
     <div class="filters" id="filters"></div>
+
+    <div class="legend" id="legend"></div>
 
     <button class="reset" id="reset-view">Centralizar</button>
     <button class="reset" id="reorganize-view">Reorganizar</button>
@@ -1993,7 +2007,7 @@ const PREFIXO_PARA_CAMADA = {
   "gold": "Gold",
 };
 
-const CARD_W = 210;
+const CARD_W = 260;
 const CARD_H = 56;
 const HEADER_H = 40;
 const EXPANDED_H = 240;
@@ -2030,6 +2044,32 @@ let searchTerm = "";
 let activeLayers = new Set();
 let activeProdutos = new Set();
 let activeCamadasProduto = new Set();
+let filterHidden = new Set();
+
+// Mesmo grafo usado para desenhar as setas de lineage, na direção
+// upstream -> downstream, para propagar a ocultação por filtro.
+const DOWNSTREAM_MAP = {};
+for (const t of mapa.tabelas) {
+  for (const upstream of t.lineage_upstream) {
+    (DOWNSTREAM_MAP[upstream] = DOWNSTREAM_MAP[upstream] || []).push(t.nome);
+  }
+}
+
+function computeFilterHidden() {
+  const hidden = new Set();
+  nodes.forEach(n => { if (!nodeActive(n)) hidden.add(n.id); });
+  const queue = Array.from(hidden);
+  while (queue.length) {
+    const cur = queue.pop();
+    (DOWNSTREAM_MAP[cur] || []).forEach(down => {
+      if (!hidden.has(down)) {
+        hidden.add(down);
+        queue.push(down);
+      }
+    });
+  }
+  return hidden;
+}
 
 let view = { x: 0, y: 0, k: 1 };
 
@@ -2065,7 +2105,7 @@ function montarNodes() {
       n.y = ROW_Y0 + rowIdx * (CARD_H + ROW_GAP);
       n.gridX = n.x;
       n.gridY = n.y;
-      n.expanded = false;
+      n.expanded = true;
       nodes.push(n);
     });
   });
@@ -2095,54 +2135,105 @@ function contentWidth() {
 const svg = document.getElementById("canvas-svg");
 let rootG;
 
-function edgePoint(node, side) {
+// Ids de todos os nós conectados a `nodeId` do lado `side` ("right" = saem
+// daqui, "left" = chegam aqui), considerando lineage + relações visíveis.
+// Usado para distribuir (fan-out) os pontos de ancoragem em vez de empilhar
+// todas as linhas no meio do cartão.
+function connectedIds(nodeId, side) {
+  const ids = [];
+  for (const t of mapa.tabelas) {
+    for (const up of t.lineage_upstream) {
+      if (side === "right" && up === nodeId && edgeVisible(up, t.nome)) ids.push(t.nome);
+      if (side === "left" && t.nome === nodeId && edgeVisible(up, t.nome)) ids.push(up);
+    }
+  }
+  for (const r of mapa.relacoes) {
+    if (side === "right" && r.tabela_origem === nodeId && edgeVisible(r.tabela_origem, r.tabela_destino)) ids.push(r.tabela_destino);
+    if (side === "left" && r.tabela_destino === nodeId && edgeVisible(r.tabela_origem, r.tabela_destino)) ids.push(r.tabela_origem);
+  }
+  return ids;
+}
+
+function edgeSlotOffset(nodeId, side, counterpartId, height) {
+  const ids = Array.from(new Set(connectedIds(nodeId, side)));
+  if (ids.length <= 1) return 0;
+  ids.sort((x, y) => (nodeById[x] ? nodeById[x].y : 0) - (nodeById[y] ? nodeById[y].y : 0));
+  const idx = ids.indexOf(counterpartId);
+  const usable = Math.min(height - 28, 6 + ids.length * 13);
+  const t = idx / (ids.length - 1);
+  return (t - 0.5) * usable;
+}
+
+function edgePoint(node, side, offset = 0) {
   // side: 'right' (saída) ou 'left' (entrada)
-  const y = node.y + cardHeight(node) / 2;
+  const y = node.y + cardHeight(node) / 2 + offset;
   return { x: side === "right" ? node.x + CARD_W : node.x, y };
 }
 
-function pathBetween(a, b) {
-  const p1 = edgePoint(a, "right");
-  const p2 = edgePoint(b, "left");
-  const colA = LAYER_ORDER.indexOf(a.camada);
-  const colB = LAYER_ORDER.indexOf(b.camada);
-
-  if (colB < colA) {
-    // Referência "para trás" (coluna destino fica à esquerda da origem, ex:
-    // Silver → Silver L2): roteia por cima das tabelas em vez de cruzar a
-    // tela inteira na diagonal por cima dos cartões.
-    const topY = ROW_Y0 - 30;
-    return `M ${p1.x} ${p1.y} L ${p1.x + 24} ${p1.y} L ${p1.x + 24} ${topY} `
-         + `L ${p2.x - 24} ${topY} L ${p2.x - 24} ${p2.y} L ${p2.x} ${p2.y}`;
+// Caminho suave com cantos arredondados a partir de uma lista de pontos.
+function roundedPath(points, r) {
+  let d = `M ${points[0].x} ${points[0].y} `;
+  for (let i = 1; i < points.length - 1; i++) {
+    const prev = points[i - 1], curr = points[i], next = points[i + 1];
+    const d1 = Math.hypot(curr.x - prev.x, curr.y - prev.y);
+    const d2 = Math.hypot(next.x - curr.x, next.y - curr.y);
+    const rr = Math.min(r, d1 / 2, d2 / 2);
+    const p1 = pointTowards(curr, prev, rr);
+    const p2 = pointTowards(curr, next, rr);
+    d += `L ${p1.x} ${p1.y} Q ${curr.x} ${curr.y} ${p2.x} ${p2.y} `;
   }
-  const dx = Math.max(60, (p2.x - p1.x) / 2);
+  const last = points[points.length - 1];
+  d += `L ${last.x} ${last.y}`;
+  return d;
+}
+
+function pointTowards(from, to, dist) {
+  const dx = to.x - from.x, dy = to.y - from.y;
+  const len = Math.hypot(dx, dy) || 1;
+  return { x: from.x + (dx / len) * dist, y: from.y + (dy / len) * dist };
+}
+
+function pathBetween(a, b) {
+  const offA = edgeSlotOffset(a.id, "right", b.id, cardHeight(a));
+  const offB = edgeSlotOffset(b.id, "left", a.id, cardHeight(b));
+  const p1 = edgePoint(a, "right", offA);
+  const p2 = edgePoint(b, "left", offB);
+
+  if (b.x < a.x - 10) {
+    // Referência "para trás" (cartão de destino começa à esquerda do de
+    // origem — inclusive após arrastar cartões livremente): roteia por cima
+    // de todas as tabelas com cantos suaves em vez de cruzar a tela na diagonal.
+    const topY = Math.min(...nodes.map(n => n.y)) - 30;
+    return roundedPath([
+      { x: p1.x, y: p1.y },
+      { x: p1.x + 24, y: p1.y },
+      { x: p1.x + 24, y: topY },
+      { x: p2.x - 24, y: topY },
+      { x: p2.x - 24, y: p2.y },
+      { x: p2.x, y: p2.y },
+    ], 14);
+  }
+  const dx = Math.max(70, (p2.x - p1.x) / 2);
   return `M ${p1.x} ${p1.y} C ${p1.x + dx} ${p1.y}, ${p2.x - dx} ${p2.y}, ${p2.x} ${p2.y}`;
 }
 
 function render() {
+  filterHidden = computeFilterHidden();
   svg.innerHTML = "";
   const defs = el("defs");
-  defs.appendChild(el("marker", { id: "arrow-lineage", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" },
-    el("path", { d: "M0,0 L10,5 L0,10 z", fill: "var(--edge-lineage)" })));
-  defs.appendChild(el("marker", { id: "arrow-relacional", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 6, markerHeight: 6, orient: "auto-start-reverse" },
-    el("path", { d: "M0,0 L10,5 L0,10 z", fill: "var(--edge-relacional)" })));
+  defs.appendChild(el("marker", { id: "arrow-lineage", viewBox: "0 0 10 10", refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" },
+    el("path", { d: "M0.5,1 L9.5,5 L0.5,9 Q2.6,5 0.5,1 Z", fill: "var(--edge-lineage)" })));
+  defs.appendChild(el("marker", { id: "arrow-relacional", viewBox: "0 0 10 10", refX: 5, refY: 5, markerWidth: 5.5, markerHeight: 5.5, orient: "auto-start-reverse" },
+    el("path", { d: "M5,0.5 L9.5,5 L5,9.5 L0.5,5 Z", fill: "var(--edge-relacional)" })));
   svg.appendChild(defs);
 
   rootG = el("g", { id: "root-g" });
   svg.appendChild(rootG);
 
-  renderLayerBands();
   renderLineageEdges();
   renderRelationalEdges();
   renderNodes();
   applyTransform();
-}
-
-function renderLayerBands() {
-  LAYER_ORDER.forEach((camada, colIdx) => {
-    const x = COL_X0 + colIdx * (CARD_W + COL_GAP) - 16;
-    rootG.appendChild(el("text", { x: x, y: 30, class: "layer-header", fill: LAYER_COLOR[camada] }, document.createTextNode(camada)));
-  });
 }
 
 function nodeActive(n) {
@@ -2156,7 +2247,7 @@ function nodeActive(n) {
 function edgeVisible(nomeA, nomeB) {
   const a = nodeById[nomeA], b = nodeById[nomeB];
   if (!a || !b) return false;
-  if (!nodeActive(a) || !nodeActive(b)) return false;
+  if (filterHidden.has(a.id) || filterHidden.has(b.id)) return false;
   return true;
 }
 
@@ -2203,7 +2294,8 @@ function renderRelationalEdges() {
 function renderNodes() {
   const g = el("g", { id: "nodes" });
   for (const n of nodes) {
-    const dimmed = (searchTerm && !nodeMatchesSearch(n)) || !nodeActive(n);
+    if (filterHidden.has(n.id)) continue;
+    const dimmed = searchTerm && !nodeMatchesSearch(n);
     const selected = n.id === selectedId;
     const h = cardHeight(n);
     const group = el("g", { transform: `translate(${n.x},${n.y})`, class: "table-card-group" });
@@ -2532,6 +2624,19 @@ function montarFiltros() {
   });
 }
 
+function montarLegenda() {
+  const container = document.getElementById("legend");
+  const presentes = LAYER_ORDER.filter(l => nodes.some(n => n.camada === l));
+  presentes.forEach(camada => {
+    const item = htmlEl("span", { class: "legend-item" });
+    const swatch = htmlEl("span", { class: "legend-swatch" });
+    swatch.style.background = LAYER_COLOR[camada];
+    item.appendChild(swatch);
+    item.appendChild(document.createTextNode(camada));
+    container.appendChild(item);
+  });
+}
+
 document.getElementById("search-input").addEventListener("input", (e) => {
   searchTerm = e.target.value.trim().toLowerCase();
   render();
@@ -2541,8 +2646,9 @@ document.getElementById("reorganize-view").addEventListener("click", () => {
   nodes.forEach(n => {
     n.x = n.gridX;
     n.y = n.gridY;
-    n.expanded = false;
+    n.expanded = true;
   });
+  resolverColisoes();
   render();
 });
 
@@ -2585,7 +2691,9 @@ function centerView() {
 // Init
 // ---------------------------------------------------------------------
 montarNodes();
+resolverColisoes();
 montarFiltros();
+montarLegenda();
 render();
 window.addEventListener("resize", centerView);
 setTimeout(centerView, 0);
