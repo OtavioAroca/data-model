@@ -1,0 +1,866 @@
+# yaml-language-server: $schema=../../_schema/schema-fisico.schema.json
+# Schema físico: Compras / Autorização
+# Define os campos de todas as 29 tabelas do pipeline
+
+tabelas:
+  # === BRONZE: Eventos raw (tópicos de streaming) ===
+  - nome: bronze.purchases__credit_approved
+    camada_medalhao: Bronze
+    colunas:
+      - nome: event_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+        descricao: Identificador único do evento
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+        descricao: Identificador da compra
+      - nome: card_id
+        tipo: TEXT
+        nullable: false
+        descricao: Identificador do cartão
+      - nome: customer_id
+        tipo: TEXT
+        nullable: false
+        descricao: Identificador do cliente
+      - nome: status
+        tipo: TEXT
+        nullable: false
+        descricao: Status (approved)
+      - nome: amount
+        tipo: REAL
+        nullable: false
+        descricao: Valor da compra em centavos
+      - nome: installments
+        tipo: INTEGER
+        nullable: true
+        descricao: Número de parcelas (crédito)
+      - nome: merchant_id
+        tipo: TEXT
+        nullable: false
+        descricao: Identificador do lojista
+      - nome: merchant_category_code
+        tipo: TEXT
+        nullable: false
+        descricao: MCC do lojista
+      - nome: channel
+        tipo: TEXT
+        nullable: false
+        descricao: Canal da compra (presencial, ecommerce, recorrencia)
+      - nome: event_timestamp
+        tipo: TEXT
+        nullable: false
+        descricao: Timestamp ISO 8601 do evento
+      - nome: ingest_timestamp
+        tipo: TEXT
+        nullable: false
+        descricao: Timestamp de ingestão
+
+  - nome: bronze.purchases__credit_denied
+    camada_medalhao: Bronze
+    colunas:
+      - nome: event_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+      - nome: card_id
+        tipo: TEXT
+        nullable: false
+      - nome: customer_id
+        tipo: TEXT
+        nullable: false
+      - nome: status
+        tipo: TEXT
+        nullable: false
+        descricao: Status (denied)
+      - nome: amount
+        tipo: REAL
+        nullable: false
+      - nome: denial_reason
+        tipo: TEXT
+        nullable: false
+        descricao: Motivo da negação (limite, fraude, etc)
+      - nome: merchant_id
+        tipo: TEXT
+        nullable: false
+      - nome: merchant_category_code
+        tipo: TEXT
+        nullable: false
+      - nome: channel
+        tipo: TEXT
+        nullable: false
+      - nome: event_timestamp
+        tipo: TEXT
+        nullable: false
+      - nome: ingest_timestamp
+        tipo: TEXT
+        nullable: false
+
+  - nome: bronze.purchases__credit_cancelled
+    camada_medalhao: Bronze
+    colunas:
+      - nome: event_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+      - nome: card_id
+        tipo: TEXT
+        nullable: false
+      - nome: customer_id
+        tipo: TEXT
+        nullable: false
+      - nome: status
+        tipo: TEXT
+        nullable: false
+        descricao: Status (cancelled)
+      - nome: amount
+        tipo: REAL
+        nullable: false
+      - nome: cancellation_reason
+        tipo: TEXT
+        nullable: true
+        descricao: Motivo do cancelamento
+      - nome: merchant_id
+        tipo: TEXT
+        nullable: false
+      - nome: merchant_category_code
+        tipo: TEXT
+        nullable: false
+      - nome: channel
+        tipo: TEXT
+        nullable: false
+      - nome: event_timestamp
+        tipo: TEXT
+        nullable: false
+      - nome: ingest_timestamp
+        tipo: TEXT
+        nullable: false
+
+  - nome: bronze.purchases__credit_clearing
+    camada_medalhao: Bronze
+    colunas:
+      - nome: event_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+      - nome: card_id
+        tipo: TEXT
+        nullable: false
+      - nome: customer_id
+        tipo: TEXT
+        nullable: false
+      - nome: status
+        tipo: TEXT
+        nullable: false
+        descricao: Status (clearing)
+      - nome: amount
+        tipo: REAL
+        nullable: false
+      - nome: merchant_id
+        tipo: TEXT
+        nullable: false
+      - nome: merchant_category_code
+        tipo: TEXT
+        nullable: false
+      - nome: event_timestamp
+        tipo: TEXT
+        nullable: false
+      - nome: ingest_timestamp
+        tipo: TEXT
+        nullable: false
+
+  - nome: bronze.purchases__credit_processed
+    camada_medalhao: Bronze
+    colunas:
+      - nome: event_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+      - nome: card_id
+        tipo: TEXT
+        nullable: false
+      - nome: customer_id
+        tipo: TEXT
+        nullable: false
+      - nome: status
+        tipo: TEXT
+        nullable: false
+        descricao: Status (processed)
+      - nome: amount
+        tipo: REAL
+        nullable: false
+      - nome: merchant_id
+        tipo: TEXT
+        nullable: false
+      - nome: merchant_category_code
+        tipo: TEXT
+        nullable: false
+      - nome: network_fee
+        tipo: REAL
+        nullable: true
+        descricao: Taxa de processamento da rede
+      - nome: event_timestamp
+        tipo: TEXT
+        nullable: false
+      - nome: ingest_timestamp
+        tipo: TEXT
+        nullable: false
+
+  # === DEBIT (similar ao credit, mas rail diferente) ===
+  - nome: bronze.purchases__debit_approved
+    camada_medalhao: Bronze
+    colunas:
+      - nome: event_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+      - nome: card_id
+        tipo: TEXT
+        nullable: false
+      - nome: customer_id
+        tipo: TEXT
+        nullable: false
+      - nome: status
+        tipo: TEXT
+        nullable: false
+      - nome: amount
+        tipo: REAL
+        nullable: false
+      - nome: merchant_id
+        tipo: TEXT
+        nullable: false
+      - nome: merchant_category_code
+        tipo: TEXT
+        nullable: false
+      - nome: channel
+        tipo: TEXT
+        nullable: false
+      - nome: event_timestamp
+        tipo: TEXT
+        nullable: false
+      - nome: ingest_timestamp
+        tipo: TEXT
+        nullable: false
+
+  - nome: bronze.purchases__debit_denied
+    camada_medalhao: Bronze
+    colunas:
+      - nome: event_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+      - nome: card_id
+        tipo: TEXT
+        nullable: false
+      - nome: customer_id
+        tipo: TEXT
+        nullable: false
+      - nome: status
+        tipo: TEXT
+        nullable: false
+      - nome: amount
+        tipo: REAL
+        nullable: false
+      - nome: denial_reason
+        tipo: TEXT
+        nullable: false
+      - nome: merchant_id
+        tipo: TEXT
+        nullable: false
+      - nome: merchant_category_code
+        tipo: TEXT
+        nullable: false
+      - nome: channel
+        tipo: TEXT
+        nullable: false
+      - nome: event_timestamp
+        tipo: TEXT
+        nullable: false
+      - nome: ingest_timestamp
+        tipo: TEXT
+        nullable: false
+
+  - nome: bronze.purchases__debit_cancelled
+    camada_medalhao: Bronze
+    colunas:
+      - nome: event_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+      - nome: card_id
+        tipo: TEXT
+        nullable: false
+      - nome: customer_id
+        tipo: TEXT
+        nullable: false
+      - nome: status
+        tipo: TEXT
+        nullable: false
+      - nome: amount
+        tipo: REAL
+        nullable: false
+      - nome: cancellation_reason
+        tipo: TEXT
+        nullable: true
+      - nome: merchant_id
+        tipo: TEXT
+        nullable: false
+      - nome: merchant_category_code
+        tipo: TEXT
+        nullable: false
+      - nome: channel
+        tipo: TEXT
+        nullable: false
+      - nome: event_timestamp
+        tipo: TEXT
+        nullable: false
+      - nome: ingest_timestamp
+        tipo: TEXT
+        nullable: false
+
+  - nome: bronze.purchases__debit_clearing
+    camada_medalhao: Bronze
+    colunas:
+      - nome: event_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+      - nome: card_id
+        tipo: TEXT
+        nullable: false
+      - nome: customer_id
+        tipo: TEXT
+        nullable: false
+      - nome: status
+        tipo: TEXT
+        nullable: false
+      - nome: amount
+        tipo: REAL
+        nullable: false
+      - nome: merchant_id
+        tipo: TEXT
+        nullable: false
+      - nome: merchant_category_code
+        tipo: TEXT
+        nullable: false
+      - nome: event_timestamp
+        tipo: TEXT
+        nullable: false
+      - nome: ingest_timestamp
+        tipo: TEXT
+        nullable: false
+
+  - nome: bronze.purchases__debit_processed
+    camada_medalhao: Bronze
+    colunas:
+      - nome: event_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+      - nome: card_id
+        tipo: TEXT
+        nullable: false
+      - nome: customer_id
+        tipo: TEXT
+        nullable: false
+      - nome: status
+        tipo: TEXT
+        nullable: false
+      - nome: amount
+        tipo: REAL
+        nullable: false
+      - nome: merchant_id
+        tipo: TEXT
+        nullable: false
+      - nome: merchant_category_code
+        tipo: TEXT
+        nullable: false
+      - nome: network_fee
+        tipo: REAL
+        nullable: true
+      - nome: event_timestamp
+        tipo: TEXT
+        nullable: false
+      - nome: ingest_timestamp
+        tipo: TEXT
+        nullable: false
+
+  # === CREDIT TRANSACTION (detalhe de parcelas) ===
+  - nome: bronze.purchases__credit_transaction
+    camada_medalhao: Bronze
+    colunas:
+      - nome: transaction_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+      - nome: installment_number
+        tipo: INTEGER
+        nullable: false
+        descricao: Número da parcela (1, 2, 3...)
+      - nome: installment_amount
+        tipo: REAL
+        nullable: false
+        descricao: Valor da parcela
+      - nome: installment_interest_rate
+        tipo: REAL
+        nullable: true
+        descricao: Taxa de juros da parcela
+      - nome: transaction_type_id
+        tipo: TEXT
+        nullable: false
+        descricao: Referência para transaction_type (vista, parcelado_sem_juros, parcelado_com_juros)
+
+  - nome: bronze.purchases__credit_transaction_type
+    camada_medalhao: Bronze
+    colunas:
+      - nome: transaction_type_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: name
+        tipo: TEXT
+        nullable: false
+        descricao: Nome do tipo (à vista, parcelado sem juros, parcelado com juros)
+      - nome: description
+        tipo: TEXT
+        nullable: true
+
+  # === SILVER L1: Histórico de eventos ===
+  - nome: silver_l1.purchases__credit_purchase
+    camada_medalhao: Silver L1
+    colunas:
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+      - nome: event_sequence
+        tipo: INTEGER
+        nullable: false
+        descricao: Sequência do evento
+      - nome: status
+        tipo: TEXT
+        nullable: false
+      - nome: event_timestamp
+        tipo: TEXT
+        nullable: false
+      - nome: card_id
+        tipo: TEXT
+        nullable: false
+      - nome: customer_id
+        tipo: TEXT
+        nullable: false
+      - nome: amount
+        tipo: REAL
+        nullable: false
+      - nome: merchant_id
+        tipo: TEXT
+        nullable: false
+      - nome: processed_timestamp
+        tipo: TEXT
+        nullable: false
+
+  - nome: silver_l1.purchases__debit_purchase
+    camada_medalhao: Silver L1
+    colunas:
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+      - nome: event_sequence
+        tipo: INTEGER
+        nullable: false
+      - nome: status
+        tipo: TEXT
+        nullable: false
+      - nome: event_timestamp
+        tipo: TEXT
+        nullable: false
+      - nome: card_id
+        tipo: TEXT
+        nullable: false
+      - nome: customer_id
+        tipo: TEXT
+        nullable: false
+      - nome: amount
+        tipo: REAL
+        nullable: false
+      - nome: merchant_id
+        tipo: TEXT
+        nullable: false
+      - nome: processed_timestamp
+        tipo: TEXT
+        nullable: false
+
+  # === SILVER L2: Estado atual materializado ===
+  - nome: silver_l2.purchases__credit_purchase
+    camada_medalhao: Silver L2
+    colunas:
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: status
+        tipo: TEXT
+        nullable: false
+        descricao: Status final (após regra de precedência)
+      - nome: status_timestamp
+        tipo: TEXT
+        nullable: false
+      - nome: card_id
+        tipo: TEXT
+        nullable: false
+      - nome: customer_id
+        tipo: TEXT
+        nullable: false
+      - nome: amount
+        tipo: REAL
+        nullable: false
+      - nome: merchant_id
+        tipo: TEXT
+        nullable: false
+      - nome: merchant_category_code
+        tipo: TEXT
+        nullable: false
+      - nome: channel
+        tipo: TEXT
+        nullable: false
+      - nome: event_count
+        tipo: INTEGER
+        nullable: false
+        descricao: Total de eventos até o status final
+
+  - nome: silver_l2.purchases__debit_purchase
+    camada_medalhao: Silver L2
+    colunas:
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: status
+        tipo: TEXT
+        nullable: false
+      - nome: status_timestamp
+        tipo: TEXT
+        nullable: false
+      - nome: card_id
+        tipo: TEXT
+        nullable: false
+      - nome: customer_id
+        tipo: TEXT
+        nullable: false
+      - nome: amount
+        tipo: REAL
+        nullable: false
+      - nome: merchant_id
+        tipo: TEXT
+        nullable: false
+      - nome: merchant_category_code
+        tipo: TEXT
+        nullable: false
+      - nome: channel
+        tipo: TEXT
+        nullable: false
+      - nome: event_count
+        tipo: INTEGER
+        nullable: false
+
+  # === SILVER: Credit transaction (sem L1/L2, schema simples) ===
+  - nome: silver.purchases__credit_transaction
+    camada_medalhao: Silver
+    colunas:
+      - nome: transaction_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+      - nome: installment_number
+        tipo: INTEGER
+        nullable: false
+      - nome: installment_amount
+        tipo: REAL
+        nullable: false
+      - nome: installment_interest_rate
+        tipo: REAL
+        nullable: true
+      - nome: transaction_type_id
+        tipo: TEXT
+        nullable: false
+
+  - nome: silver.purchases__credit_transaction_type
+    camada_medalhao: Silver
+    colunas:
+      - nome: transaction_type_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: name
+        tipo: TEXT
+        nullable: false
+      - nome: description
+        tipo: TEXT
+        nullable: true
+
+  # === GOLD: Integration purchase journey ===
+  - nome: gold.integration__purchase_journey
+    camada_medalhao: Gold
+    colunas:
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: rail
+        tipo: TEXT
+        nullable: false
+        descricao: Tipo de transação (credit ou debit)
+      - nome: status
+        tipo: TEXT
+        nullable: false
+      - nome: status_timestamp
+        tipo: TEXT
+        nullable: false
+      - nome: card_id
+        tipo: TEXT
+        nullable: false
+      - nome: customer_id
+        tipo: TEXT
+        nullable: false
+      - nome: amount
+        tipo: REAL
+        nullable: false
+      - nome: merchant_id
+        tipo: TEXT
+        nullable: false
+      - nome: merchant_category_code
+        tipo: TEXT
+        nullable: false
+      - nome: channel
+        tipo: TEXT
+        nullable: false
+      - nome: installments
+        tipo: INTEGER
+        nullable: true
+      - nome: reversal_amount
+        tipo: REAL
+        nullable: true
+        descricao: Valor de estorno (disputas)
+      - nome: created_at
+        tipo: TEXT
+        nullable: false
+      - nome: updated_at
+        tipo: TEXT
+        nullable: false
+
+  # === GOLD: Analytics tables (estrutura simples, dados vazios por agora) ===
+  - nome: gold.analytics__extrato_cliente
+    camada_medalhao: Gold
+    colunas:
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: customer_id
+        tipo: TEXT
+        nullable: false
+      - nome: amount
+        tipo: REAL
+        nullable: false
+      - nome: status
+        tipo: TEXT
+        nullable: false
+      - nome: transaction_date
+        tipo: TEXT
+        nullable: false
+      - nome: merchant_name
+        tipo: TEXT
+        nullable: true
+
+  - nome: gold.analytics__comportamento_gasto
+    camada_medalhao: Gold
+    colunas:
+      - nome: customer_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: total_spent
+        tipo: REAL
+        nullable: false
+      - nome: average_ticket
+        tipo: REAL
+        nullable: false
+      - nome: purchase_count
+        tipo: INTEGER
+        nullable: false
+      - nome: top_category
+        tipo: TEXT
+        nullable: true
+
+  - nome: gold.analytics__taxa_aprovacao_compra
+    camada_medalhao: Gold
+    colunas:
+      - nome: periodo
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: segmento
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: total_compras
+        tipo: INTEGER
+        nullable: false
+      - nome: compras_aprovadas
+        tipo: INTEGER
+        nullable: false
+      - nome: compras_negadas
+        tipo: INTEGER
+        nullable: false
+      - nome: taxa_aprovacao
+        tipo: REAL
+        nullable: false
+
+  - nome: gold.analytics__motivos_negacao_compra
+    camada_medalhao: Gold
+    colunas:
+      - nome: denial_reason
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: count
+        tipo: INTEGER
+        nullable: false
+      - nome: percentage
+        tipo: REAL
+        nullable: false
+
+  - nome: gold.analytics__ranking_lojista_categoria
+    camada_medalhao: Gold
+    colunas:
+      - nome: merchant_category_code
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: merchant_name
+        tipo: TEXT
+        nullable: true
+      - nome: count
+        tipo: INTEGER
+        nullable: false
+      - nome: total_spent
+        tipo: REAL
+        nullable: false
+
+  - nome: gold.analytics__adocao_parcelamento
+    camada_medalhao: Gold
+    colunas:
+      - nome: installment_count
+        tipo: INTEGER
+        nullable: false
+        chave_primaria: true
+      - nome: total_compras
+        tipo: INTEGER
+        nullable: false
+      - nome: average_amount
+        tipo: REAL
+        nullable: false
+      - nome: percentage
+        tipo: REAL
+        nullable: false
+
+  - nome: gold.analytics__latencia_liquidacao_compra
+    camada_medalhao: Gold
+    colunas:
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: approved_timestamp
+        tipo: TEXT
+        nullable: false
+      - nome: clearing_timestamp
+        tipo: TEXT
+        nullable: true
+      - nome: processed_timestamp
+        tipo: TEXT
+        nullable: false
+      - nome: latencia_minutos
+        tipo: INTEGER
+        nullable: false
+
+  - nome: gold.analytics__mix_canal
+    camada_medalhao: Gold
+    colunas:
+      - nome: channel
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: count
+        tipo: INTEGER
+        nullable: false
+      - nome: percentage
+        tipo: REAL
+        nullable: false
+
+  - nome: gold.analytics__gasto_internacional
+    camada_medalhao: Gold
+    colunas:
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: amount_usd
+        tipo: REAL
+        nullable: false
+      - nome: amount_brl
+        tipo: REAL
+        nullable: false
+      - nome: exchange_rate
+        tipo: REAL
+        nullable: false
+
+  - nome: gold.analytics__gasto_elegivel_rewards
+    camada_medalhao: Gold
+    colunas:
+      - nome: purchase_id
+        tipo: TEXT
+        nullable: false
+        chave_primaria: true
+      - nome: customer_id
+        tipo: TEXT
+        nullable: false
+      - nome: eligible_amount
+        tipo: REAL
+        nullable: false
+      - nome: category
+        tipo: TEXT
+        nullable: false

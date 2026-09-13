@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Schema Físico — Contrato de Colunas",
+  "description": "Define a estrutura esperada de catalogo/<slug>/schema-fisico.yaml",
+  "type": "object",
+  "required": ["tabelas"],
+  "properties": {
+    "tabelas": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Definição de colunas para cada tabela física",
+      "items": {
+        "type": "object",
+        "required": ["nome", "camada_medalhao", "colunas"],
+        "properties": {
+          "nome": {
+            "type": "string",
+            "pattern": "^[a-z_][a-z0-9_]*\\.[a-z_][a-z0-9_]*$",
+            "description": "Nome da tabela em formato camada.nome (ex: bronze.purchases__credit_approved)"
+          },
+          "camada_medalhao": {
+            "type": "string",
+            "enum": ["Bronze", "Silver", "Silver L1", "Silver L2", "Gold"],
+            "description": "Camada medalhão da tabela"
+          },
+          "colunas": {
+            "type": "array",
+            "minItems": 1,
+            "description": "Definição de cada coluna",
+            "items": {
+              "type": "object",
+              "required": ["nome", "tipo", "nullable", "descricao"],
+              "properties": {
+                "nome": {
+                  "type": "string",
+                  "pattern": "^[a-z_][a-z0-9_]*$",
+                  "description": "Nome da coluna"
+                },
+                "tipo": {
+                  "type": "string",
+                  "enum": ["TEXT", "INTEGER", "REAL", "BOOLEAN"],
+                  "description": "Tipo de dado (SQLite)"
+                },
+                "nullable": {
+                  "type": "boolean",
+                  "description": "Se a coluna pode ser nula"
+                },
+                "descricao": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Descrição semântica da coluna"
+                },
+                "chave_primaria": {
+                  "type": "boolean",
+                  "description": "Se é chave primária (opcional)"
+                },
+                "chave_estrangeira": {
+                  "type": "object",
+                  "description": "Referência para outra tabela (opcional)",
+                  "properties": {
+                    "tabela": {
+                      "type": "string",
+                      "pattern": "^[a-z_][a-z0-9_]*\\.[a-z_][a-z0-9_]*$"
+                    },
+                    "coluna": {
+                      "type": "string",
+                      "pattern": "^[a-z_][a-z0-9_]*$"
+                    }
+                  },
+                  "required": ["tabela", "coluna"],
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

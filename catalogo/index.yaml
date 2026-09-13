@@ -1,0 +1,125 @@
+# yaml-language-server: $schema=./_schema/index.schema.json
+meta:
+  titulo: Catálogo V0 — Produtos de dados do domínio Cartão
+  o_que_e: Primeira versão (V0) do catálogo de produtos de dados propostos para todos
+    os subdomínios do domínio Cartão, seguindo o modelo Core / Integration / Analytics.
+  como_ler:
+  - 'Aba ''Subdomínios'': visão geral de cada bounded context do domínio cartão —
+    o que ele resolve e quais sistemas normalmente o alimentam.'
+  - 'Aba ''Catálogo V0'': lista de produtos de dados propostos por subdomínio e por
+    camada (Core, Integration, Analytics), com descrição, consumidores esperados e
+    dono sugerido.'
+  o_que_nao_e:
+  - Não é uma lista definitiva nem exaustiva de tabelas físicas. Nomes, donos e consumidores
+    são propostas iniciais para validação com cada time de domínio — esperado que
+    mude bastante entre V0 e V1.
+  - Alguns subdomínios provavelmente têm produtos adicionais que só quem opera o sistema
+    de origem vai enxergar — use este catálogo como ponto de partida da conversa,
+    não como inventário fechado.
+  convencao_camadas:
+    Core: produto alinhado a um único bounded context / sistema de origem
+    Integration: produto que cruza mais de um bounded context
+    Analytics: produto moldado para um caso de uso de consumo final
+subdominios:
+- nome: Elegibilidade
+  slug: elegibilidade
+  bounded_context: Avalia se um cliente pode receber uma oferta de cartão, e sob quais
+    condições
+  sistemas_origem: Motor de elegibilidade / bureaus de crédito
+  tipo_ddd: Core
+  tem_mapeamento_tecnico: false
+- nome: Onboarding
+  slug: onboarding
+  bounded_context: Conduz a proposta, validação de identidade (KYC) e abertura da
+    conta cartão
+  sistemas_origem: Sistema de proposta, KYC/antifraude cadastral
+  tipo_ddd: Core
+  tem_mapeamento_tecnico: false
+- nome: Conta Cartão
+  slug: conta-cartao
+  bounded_context: Representa o relacionamento contratual entre cliente e produto
+    cartão
+  sistemas_origem: Core banking de contas
+  tipo_ddd: Core
+  tem_mapeamento_tecnico: false
+- nome: Cartão
+  slug: cartao
+  bounded_context: 'Gerencia o ciclo de vida do plástico/virtual: emissão, ativação,
+    bloqueio, reemissão'
+  sistemas_origem: Sistema de emissão de cartões
+  tipo_ddd: Core
+  tem_mapeamento_tecnico: false
+- nome: Limite
+  slug: limite
+  bounded_context: Concede, ajusta e controla o limite de crédito disponível na conta
+    cartão
+  sistemas_origem: Motor de crédito/limite
+  tipo_ddd: Core
+  tem_mapeamento_tecnico: false
+- nome: Compras / Autorização
+  slug: compras-autorizacao
+  bounded_context: Autoriza e captura as transações realizadas com o cartão, incluindo
+    o plano de parcelamento decidido no ato da compra
+  sistemas_origem: Switch de autorização, rede/bandeira
+  tipo_ddd: Core
+  tem_mapeamento_tecnico: true
+- nome: Fatura
+  slug: fatura
+  bounded_context: Gera e fecha a fatura periódica com as transações e encargos do
+    ciclo
+  sistemas_origem: Billing engine
+  tipo_ddd: Core
+  tem_mapeamento_tecnico: false
+- nome: Pagamento da Fatura
+  slug: pagamento-da-fatura
+  bounded_context: Registra e concilia os pagamentos feitos pelo cliente contra a
+    fatura, e estrutura o saldo devedor em parcelas (rotativo) quando o pagamento
+    é parcial
+  sistemas_origem: Sistema de pagamentos/liquidação
+  tipo_ddd: Support
+  tem_mapeamento_tecnico: false
+- nome: Disputas / Chargeback
+  slug: disputas-chargeback
+  bounded_context: Processa contestações de transações e o fluxo de chargeback com
+    a bandeira
+  sistemas_origem: Sistema de disputas
+  tipo_ddd: Support
+  tem_mapeamento_tecnico: false
+- nome: Fraude
+  slug: fraude
+  bounded_context: Avalia risco de fraude em tempo real e retroativamente
+  sistemas_origem: Motor antifraude
+  tipo_ddd: Core
+  tem_mapeamento_tecnico: false
+- nome: Cobrança
+  slug: cobranca
+  bounded_context: Trata contas em atraso, régua de contato e negociação
+  sistemas_origem: Sistema de cobrança/régua
+  tipo_ddd: Support
+  tem_mapeamento_tecnico: false
+- nome: Benefícios / Rewards
+  slug: beneficios-rewards
+  bounded_context: Administra pontos, cashback e resgates associados ao uso do cartão
+  sistemas_origem: Plataforma de rewards
+  tipo_ddd: Generic
+  tem_mapeamento_tecnico: false
+- nome: Encerramento
+  slug: encerramento
+  bounded_context: Processa o cancelamento definitivo de cartão ou conta
+  sistemas_origem: Core banking de contas
+  tipo_ddd: Support
+  tem_mapeamento_tecnico: false
+- nome: Anuidade
+  slug: anuidade
+  bounded_context: Calcula, cobra e administra isenções/negociação da anuidade do
+    cartão
+  sistemas_origem: Motor de anuidade (regras de isenção e negociação)
+  tipo_ddd: Support
+  tem_mapeamento_tecnico: false
+- nome: Entrega
+  slug: entrega
+  bounded_context: Rastreia a entrega física do cartão, do despacho até a confirmação
+    de recebimento
+  sistemas_origem: Integração com transportadora/Correios
+  tipo_ddd: Support
+  tem_mapeamento_tecnico: false

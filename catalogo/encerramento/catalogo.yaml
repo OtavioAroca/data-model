@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=../_schema/catalogo.schema.json
+subdominio:
+  nome: Encerramento
+  bounded_context: Processa o cancelamento definitivo de cartão ou conta
+  sistemas_origem: Core banking de contas
+  tipo_ddd: Support
+produtos:
+- camada: Core
+  nome: core_account_closure
+  descricao: Registro e motivo de encerramento de cartão ou conta
+  consumidores:
+  - Atendimento
+  - compliance
+  - Time de Performance
+  dono: Time de Conta/Core Banking
+  status: V0 — a validar
+- camada: Analytics
+  nome: analytics_card_churn
+  descricao: Taxa e motivos de churn do produto cartão
+  consumidores:
+  - Produto
+  - retenção
+  - Time de Performance
+  dono: Time de Conta/Core Banking
+  status: V0 — a validar

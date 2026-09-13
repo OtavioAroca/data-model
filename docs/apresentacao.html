@@ -1,0 +1,4456 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelagem de Dados — Domínio Cartão</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Cores por camada */
+        :root {
+            --color-bronze: #b87c36;
+            --color-silver-l1: #a8a8a8;
+            --color-silver: #b0b0b0;
+            --color-silver-l2: #8a8a8a;
+            --color-gold: #d4a757;
+            --color-core: #2563eb;
+            --color-integration: #0891b2;
+            --color-analytics: #7c3aed;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --border-color: #e5e7eb;
+            --text-muted: #6b7280;
+        }
+
+        /* Navegação fixa */
+        nav {
+            position: sticky;
+            top: 0;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0;
+            gap: 2px;
+        }
+
+        nav a {
+            display: block;
+            padding: 16px 24px;
+            text-decoration: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            color: #000;
+            background: var(--bg-secondary);
+        }
+
+        nav a.active {
+            color: var(--color-core);
+            border-bottom-color: var(--color-core);
+        }
+
+        /* Layout principal */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        section {
+            display: none;
+        }
+
+        section.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Seção: Início & Conceitos */
+        .hero {
+            text-align: center;
+            margin-bottom: 60px;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+        }
+
+        .hero h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .hero p {
+            font-size: 1.2em;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .conceptos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .concept-card {
+            background: var(--bg-primary);
+            border-left: 4px solid var(--color-core);
+            padding: 24px;
+            border-radius: 4px;
+        }
+
+        .concept-card h3 {
+            margin-bottom: 12px;
+            color: var(--color-core);
+        }
+
+        .concept-card p {
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        /* Tabela de desambiguação */
+        .disambiguation-table {
+            margin: 40px 0;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-primary);
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-secondary);
+            font-weight: 600;
+            color: #000;
+        }
+
+        tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        /* Seção: Mapa de Subdomínios */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .filter-btn.active {
+            background: var(--color-core);
+            color: white;
+            border-color: var(--color-core);
+        }
+
+        .filter-btn:hover {
+            border-color: var(--color-core);
+        }
+
+        .subdominios-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .subdominio-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .subdominio-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: var(--color-core);
+        }
+
+        .subdominio-header {
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .subdominio-header h3 {
+            margin: 0;
+            font-size: 1.1em;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #e0e7ff;
+            color: var(--color-core);
+        }
+
+        .badge.support {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .badge.generic {
+            background: #f3e8ff;
+            color: #9333ea;
+        }
+
+        .badge.technical {
+            background: #dcfce7;
+            color: #15803d;
+            margin-left: 8px;
+        }
+
+        .subdominio-body {
+            padding: 16px;
+        }
+
+        .subdominio-body p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .produtos-list {
+            font-size: 13px;
+        }
+
+        .produtos-list li {
+            list-style: none;
+            padding: 6px 0;
+            padding-left: 16px;
+            position: relative;
+            color: var(--text-muted);
+        }
+
+        .produtos-list li:before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: var(--color-core);
+        }
+
+        /* Seção: Estudo de Caso */
+        .subnav {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .subnav button {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+
+        .subnav button.active {
+            color: var(--color-core);
+            border-bottom-color: var(--color-core);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* SVG Diagram */
+        .diagram-container {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow: auto;
+            max-height: 600px;
+        }
+
+        svg {
+            display: block;
+            margin: 0 auto;
+            background: white;
+        }
+
+        /* Explorador de tabelas */
+        .explorer-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .explorer-list {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            overflow-y: auto;
+            max-height: 600px;
+        }
+
+        .explorer-list .search {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background: var(--bg-secondary);
+        }
+
+        .explorer-list .search input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .explorer-list .table-item {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 13px;
+        }
+
+        .explorer-list .table-item:hover,
+        .explorer-list .table-item.active {
+            background: var(--bg-secondary);
+        }
+
+        .explorer-detail {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .explorer-detail h4 {
+            margin: 16px 0 8px;
+            color: var(--color-core);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .columns-grid {
+            display: grid;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .column-row {
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .column-name {
+            font-weight: 600;
+            color: #000;
+        }
+
+        .column-type {
+            display: inline-block;
+            background: #e0e7ff;
+            color: var(--color-core);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin: 0 6px;
+        }
+
+        .column-badges {
+            display: inline-flex;
+            gap: 6px;
+        }
+
+        .column-badge {
+            display: inline-block;
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .column-desc {
+            color: var(--text-muted);
+            margin-top: 6px;
+            font-size: 12px;
+        }
+
+        /* Drawer / Modal */
+        .drawer {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 400px;
+            height: 100%;
+            background: var(--bg-primary);
+            border-left: 1px solid var(--border-color);
+            box-shadow: -2px 0 8px rgba(0,0,0,0.15);
+            z-index: 200;
+            transition: right 0.3s;
+            overflow-y: auto;
+        }
+
+        .drawer.active {
+            right: 0;
+        }
+
+        .drawer-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .drawer-content {
+            padding: 60px 20px 20px;
+        }
+
+        /* Benefícios */
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .benefit-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            transition: all 0.2s;
+        }
+
+        .benefit-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: var(--color-integration);
+        }
+
+        .benefit-card h3 {
+            color: var(--color-integration);
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+
+        .benefit-card p {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        /* Callout */
+        .callout {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 16px;
+            border-radius: 4px;
+            margin: 20px 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .callout strong {
+            display: block;
+            color: #92400e;
+            margin-bottom: 6px;
+        }
+
+        /* Legenda */
+        .legend {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+            font-size: 13px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+
+        /* Diagrama interativo */
+        .diagram-toolbar {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .diagram-search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .diagram-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .diagram-zoom-controls {
+            display: flex;
+            gap: 4px;
+        }
+
+        .diagram-zoom-btn {
+            padding: 8px 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .diagram-zoom-btn:hover {
+            background: var(--bg-primary);
+            border-color: var(--color-core);
+        }
+
+        .diagram-viewport {
+            position: relative;
+            width: 100%;
+            height: 640px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            overflow: hidden;
+            cursor: grab;
+        }
+
+        .diagram-viewport.panning {
+            cursor: grabbing;
+        }
+
+        .diagram-world {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-origin: 0 0;
+        }
+
+        .diagram-world.animated {
+            transition: transform 0.4s ease-out;
+        }
+
+        .diagram-edges {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            overflow: visible;
+            background: transparent;
+        }
+
+        .diagram-lane-label {
+            position: absolute;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .diagram-node {
+            position: absolute;
+            background: var(--bg-primary);
+            border: 2px solid #ccc;
+            border-radius: 6px;
+            padding: 0;
+            width: 240px;
+            height: 56px;
+            transition: height 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            cursor: pointer;
+        }
+
+        .diagram-node--ghost {
+            border-style: dashed;
+            opacity: 0.85;
+        }
+
+        .diagram-node:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+        }
+
+        .diagram-node--highlight {
+            box-shadow: 0 0 0 2px var(--color-core);
+            z-index: 10;
+        }
+
+        .diagram-node--column-highlight {
+            box-shadow: 0 0 0 2px var(--color-analytics);
+            z-index: 10;
+        }
+
+        .diagram-node--dim {
+            opacity: 0.3;
+        }
+
+        .diagram-node-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .diagram-node--ghost .diagram-node-header {
+            border-bottom: none;
+        }
+
+        .diagram-node-name {
+            flex: 1;
+            font-weight: 600;
+            font-size: 13px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .diagram-node-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .diagram-node-colcount {
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .diagram-node-caret {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: transform 0.2s;
+        }
+
+        .diagram-node--expanded .diagram-node-caret {
+            transform: rotate(90deg);
+        }
+
+        .diagram-node--ghost .diagram-node-caret {
+            display: none;
+        }
+
+        .diagram-node-columns {
+            display: none;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 8px 0;
+        }
+
+        .diagram-node--expanded .diagram-node-columns {
+            display: block;
+        }
+
+        .diagram-node-column {
+            padding: 6px 12px;
+            font-size: 12px;
+            line-height: 1.4;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .diagram-node-column:hover {
+            background: var(--bg-secondary);
+        }
+
+        .diagram-node-column--active {
+            background: #e0e7ff;
+        }
+
+        .edge {
+            fill: none;
+            stroke: #9ca3af;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            opacity: 0.7;
+        }
+
+        .edge--highlight {
+            stroke: var(--color-core);
+            stroke-width: 2;
+            opacity: 1;
+        }
+
+        .edge--column-highlight {
+            stroke: var(--color-analytics);
+            stroke-width: 1.5;
+            stroke-dasharray: 4,3;
+            opacity: 0.8;
+        }
+
+        .edge--dim {
+            opacity: 0.1;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .explorer-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .conceptos-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 1.8em;
+            }
+
+            nav ul {
+                flex-wrap: wrap;
+            }
+
+            nav a {
+                padding: 12px 16px;
+                font-size: 13px;
+            }
+
+            .diagram-viewport {
+                height: 420px;
+            }
+
+            .diagram-toolbar {
+                flex-direction: column;
+            }
+
+            .diagram-search-input {
+                width: 100%;
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navegação -->
+    <nav>
+        <ul>
+            <li><a class="nav-link active" data-section="inicio" href="#inicio">Início & Conceitos</a></li>
+            <li><a class="nav-link" data-section="mapa" href="#mapa">Mapa dos Subdomínios</a></li>
+            <li><a class="nav-link" data-section="estudo-caso" href="#estudo-caso">Estudo de Caso</a></li>
+            <li><a class="nav-link" data-section="beneficios" href="#beneficios">Benefícios</a></li>
+        </ul>
+    </nav>
+
+    <!-- Seção: Início & Conceitos -->
+    <section id="inicio" class="active">
+        <div class="container">
+            <div class="hero">
+                <h1>📊 Modelagem de Dados</h1>
+                <p>Catálogo V0 de Produtos de Dados — Domínio Cartão</p>
+            </div>
+
+            <div>
+                <h2>O que é este catálogo?</h2>
+                <p>Uma proposta de modelagem de dados para o domínio de cartão de crédito, organizada em torno de três conceitos-chave:</p>
+
+                <div class="conceptos-grid">
+                    <div class="concept-card">
+                        <h3>Domain-Driven Design (DDD)</h3>
+                        <p>Organiza o domínio em <strong>bounded contexts</strong> (subdomínios autônomos) e os classifica por importância estratégica: <strong>Core</strong> (diferencial competitivo), <strong>Support</strong> (necessário mas não diferencial), <strong>Generic</strong> (soluções off-the-shelf).</p>
+                    </div>
+
+                    <div class="concept-card" style="border-left-color: var(--color-gold);">
+                        <h3>Camada Medalhão</h3>
+                        <p>Estrutura o data lake em <strong>Bronze</strong> (dados brutos), <strong>Silver</strong> (limpo e padronizado, com L1/L2), <strong>Gold</strong> (pronto para consumo). Silver L1 preserva histórico completo; Silver L2 materializa estado atual via regra de negócio.</p>
+                    </div>
+
+                    <div class="concept-card" style="border-left-color: var(--color-integration);">
+                        <h3>Core / Integration / Analytics</h3>
+                        <p>Classifica os <strong>produtos de dados</strong> por escopo: <strong>Core</strong> (1 bounded context), <strong>Integration</strong> (cruza ≥2 contextos), <strong>Analytics</strong> (moldado para caso de uso final). São eixos independentes dos anteriores.</p>
+                    </div>
+                </div>
+
+                <div class="callout">
+                    <strong>⚠️ Importante: "Core" tem 3 significados</strong>
+                    A palavra "Core" aparece em três contextos diferentes deste projeto — veja a tabela abaixo para não confundir:
+                </div>
+
+                <div class="disambiguation-table">
+                    <table id="disambiguation"></table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção: Mapa dos Subdomínios -->
+    <section id="mapa">
+        <div class="container">
+            <h2>Os 15 Subdomínios do Cartão</h2>
+            <p style="margin-bottom: 24px; color: var(--text-muted);">Cada card mostra um bounded context com seus sistemas de origem e os produtos de dados propostos por camada.</p>
+
+            <div class="filter-bar">
+                <button class="filter-btn active" data-filter="all">Todos</button>
+                <button class="filter-btn" data-filter="core">Core</button>
+                <button class="filter-btn" data-filter="support">Support</button>
+                <button class="filter-btn" data-filter="generic">Generic</button>
+            </div>
+
+            <div class="subdominios-grid" id="subdominios-container"></div>
+        </div>
+    </section>
+
+    <!-- Seção: Estudo de Caso -->
+    <section id="estudo-caso">
+        <div class="container">
+            <h2>Estudo de Caso: Compras / Autorização</h2>
+            <p style="margin-bottom: 24px; color: var(--text-muted);">O único subdomínio com mapeamento técnico completo (29 tabelas físicas, pipeline Bronze→Silver→Gold).</p>
+
+            <div class="subnav">
+                <button class="estudo-tab-btn active" data-tab="diagrama">Diagrama</button>
+                <button class="estudo-tab-btn" data-tab="explorer">Explorador de Tabelas</button>
+                <button class="estudo-tab-btn" data-tab="notas">Notas do Piloto</button>
+            </div>
+
+            <!-- Tab: Diagrama -->
+            <div class="tab-content active" data-tab="diagrama">
+                <p style="color: var(--text-muted); margin-bottom: 20px;">
+                    Diagrama interativo de lineage: 29 tabelas físicas + 1 tabela externa não mapeada, organizadas por camada medalhão (Bronze → Silver → Gold). Clique num nó para expandir suas colunas e ver o lineage; com o nó expandido, clique numa coluna para ver relacionamentos inferidos por nome.
+                </p>
+
+                <div class="callout">
+                    <strong>⚠️ Relacionamentos inferidos, não validados</strong>
+                    Ao clicar numa coluna, as tabelas relacionadas foram inferidas pelo padrão de nome de coluna (colunas terminadas em <code>_id</code>, <code>event_id</code>, <code>transaction_id</code>). O schema não usa <code>FOREIGN KEY</code> real. Use isto como ponto de partida para validação, não como modelo relacional definitivo.
+                </div>
+
+                <div class="diagram-toolbar">
+                    <input type="text" id="diagram-search" class="diagram-search-input" placeholder="Buscar tabela...">
+                    <div class="diagram-filters" id="diagram-filters"></div>
+                    <div class="diagram-zoom-controls">
+                        <button id="diagram-zoom-out" class="diagram-zoom-btn" title="Diminuir zoom">−</button>
+                        <button id="diagram-zoom-reset" class="diagram-zoom-btn" title="Ajustar à tela">Ajustar</button>
+                        <button id="diagram-zoom-in" class="diagram-zoom-btn" title="Aumentar zoom">+</button>
+                    </div>
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--color-bronze);"></div>
+                        <span>Bronze (raw)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--color-silver-l1);"></div>
+                        <span>Silver L1 (histórico)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--color-silver);"></div>
+                        <span>Silver (limpo)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--color-silver-l2);"></div>
+                        <span>Silver L2 (estado atual)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--color-gold);"></div>
+                        <span>Gold (agregado)</span>
+                    </div>
+                </div>
+
+                <div class="diagram-viewport" id="diagram-viewport">
+                    <div class="diagram-world" id="diagram-world">
+                        <svg class="diagram-edges" id="diagram-edges-svg"></svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Explorador -->
+            <div class="tab-content" data-tab="explorer">
+                <p style="color: var(--text-muted); margin-bottom: 20px;">Clique em uma tabela para ver suas colunas, tipos, descrições e lineage.</p>
+                <div class="explorer-grid">
+                    <div class="explorer-list">
+                        <div class="search">
+                            <input type="text" id="table-search" placeholder="Buscar tabela...">
+                        </div>
+                        <div id="table-list"></div>
+                    </div>
+                    <div class="explorer-detail" id="table-detail">
+                        <p style="color: var(--text-muted); text-align: center; padding: 40px 20px;">Selecione uma tabela para ver seus detalhes</p>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Tab: Notas -->
+            <div class="tab-content" data-tab="notas">
+                <p style="margin-bottom: 20px; color: var(--text-muted);">Anotações técnicas e pendências do piloto:</p>
+                <div id="notas-list"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção: Benefícios -->
+    <section id="beneficios">
+        <div class="container">
+            <h2>Por que Produtos de Dados?</h2>
+            <p style="margin-bottom: 40px; color: var(--text-muted);">Benefícios de adotar esta abordagem de modelagem de dados:</p>
+
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <h3>🎯 Alinhamento com Negócio</h3>
+                    <p>Organizar por <strong>bounded contexts</strong> (subdomínios) espelha as estruturas de negócio. Cada time de domínio "possui" seus dados e toma decisões de design.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <h3>🔍 Transparência de Dados</h3>
+                    <p>O catálogo centralizado documenta o que existe, quem é o dono, quem consome, em que camada está. Reduz silos e acelera descoberta de dados.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <h3>💾 Eficiência Silver L1 ≠ L2</h3>
+                    <p>Manter <strong>L1 (histórico completo)</strong> e <strong>L2 (estado atual)</strong> separados economiza custo de reprocessamento: Analytics lê L1 quando precisa de múltiplos timestamps; Integration lê L2 (estado atual) para operações. Não é redundância, é otimização por audiência.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <h3>🔗 Integration reduz N×N</h3>
+                    <p>Um <strong>produto Integration</strong> cruza múltiplos bounded contexts e padroniza schema. Sem ele, cada consumidor teria que cruzar N contextos de forma independente — criando N×M integrations ao invés de 1+M.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <h3>🌍 Analytics em Português</h3>
+                    <p>Usar <strong>nomes em português</strong> nos produtos Analytics (não em inglês como Core/Integration) reduz fricção com consumidores não-técnicos (Risk, Marketing, Finance). Menos tradução mental.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <h3>📈 Escalabilidade Organizacional</h3>
+                    <p>À medida que o catálogo cresce, a estrutura "catálogo modular por subdomínio" permite que novos times de domínio se integrem sem reescrever tudo — apenas adicionam sua pasta <code>catalogo/&lt;slug&gt;/</code> e seus produtos.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Drawer reutilizável -->
+    <div class="drawer" id="detail-drawer">
+        <button class="drawer-close" onclick="closeDrawer()">✕</button>
+        <div class="drawer-content" id="drawer-content"></div>
+    </div>
+
+    <script>
+        const DATA = {
+  "meta": {
+    "gerado_em": "build_apresentacao.py",
+    "fonte": "kb/ + catalogo/"
+  },
+  "conceitos": {
+    "ddd_markdown": "# DDD — Domain-Driven Design (essencial)\n\n## Bounded Context\n\nUm **bounded context** é um domínio claro e bem delimitado do negócio, com sua própria linguagem, regras e modelos de dados.\n\nNo domínio Cartão, cada linha da aba \"Subdomínios\" é um bounded context — por exemplo:\n\n- **Compras / Autorização**: \"Autoriza e captura as transações realizadas com o cartão, incluindo o plano de parcelamento decidido no ato da compra\". Tem seus próprios sistemas de origem (Switch de autorização, rede/bandeira), seus próprios conceitos (status: approved, denied, cancelled, clearing, processed) e alimenta seus próprios produtos de dados.\n\nCada bounded context pode ter um dono técnico, definir sua própria linguagem ubíqua (ver próxima seção) e evoluir de forma independente dos outros.\n\n---\n\n## Subdomínio: Core / Support / Generic\n\nUma classificação **estratégica** de como cada bounded context importa para o negócio.\n\n### Core\n\nO subdomínio é um **diferencial competitivo** — a empresa quer estar melhor nele do que a concorrência. Vale investimento técnico e complexidade.\n\nExemplos no catálogo:\n- **Elegibilidade**: decisão de crédito é o coração da estratégia bancária.\n- **Fraude**: reduzir fraude é diferencial de segurança.\n- **Compras / Autorização**: fluxo de transação é crítico.\n\n### Support\n\nO subdomínio é **necessário mas não diferencial** — tem de funcionar bem, mas não é o ponto de vantagem competitiva. Investe-se menos em customização.\n\nExemplos no catálogo:\n- **Cobrança**: todo banco precisa cobrar, mas a abordagem é padrão.\n- **Pagamento da Fatura**: infraestrutura conhecida.\n- **Encerramento**: processo straightforward.\n\n### Generic\n\nO subdomínio é **comum a qualquer negócio** — usa-se solução off-the-shelf (ou copia-se de outros). Não vale reinventar.\n\nExemplos no catálogo:\n- **Benefícios / Rewards**: lógica de pontos/cashback é genérica, existem soluções prontas no mercado.\n\n---\n\n## Linguagem Ubíqua\n\nA **linguagem ubíqua** é o vocabulário compartilhado entre time técnico, time de negócio e stakeholders — sem tradução, sem ambiguidade, sem sinônimos.\n\nNo catálogo, a linguagem ubíqua aparece nos nomes dos produtos de dados:\n\n- `purchase` (não `transaction` ou `order`): o termo exato que o negócio usa para \"compra feita com o cartão\".\n- `statement` (não `invoice` ou `billing`): o termo exato para \"fatura periódica\".\n- `dispute` (não `chargeback` ou `claim`): contestação de transação.\n- `collection` (não `recovery` ou `arrear`): cobrança de atrasos.\n\nPor que isso importa? Porque quando um analista de risco fala em \"temos alta taxa de disputes\", o time técnico sabe exatamente qual tabela abrir (ex: `analytics_dispute_rate` no ouro) sem interpretar ou perguntar \"você quer dizer chargeback?\".\n\nNa prática, o catálogo do domínio Cartão **preserva a linguagem ubíqua em português** em nomes de produtos (`analytics_extrato_cliente`, `analytics_comportamento_gasto`), mas usa **inglês em produtos Core e Integration** porque o público desses produtos é engenharia (mais técnico e com convenção de inglês). Analytics fica em português porque seus consumidores finais (risco, marketing, financeiro) são menos técnicos.\n\n---\n\n## Nota: não confundir com Core (produto de dados)\n\nA classificação DDD de \"**Core** subdomínio\" é diferente da classificação de \"**Core** produto de dados\".\n\n- **Core (DDD)** = subdomínio com importância estratégica elevada para o negócio.\n- **Core (produto de dados)** = produto que representa exatamente um bounded context, sem cruzamento com outros.\n\nUm subdomínio Support (ex: Cobrança) pode gerar produtos Core de dados (`core_collections_status`), e um subdomínio Core (ex: Compras / Autorização) gera produtos em todas as camadas (Core, Integration, Analytics).\n\nVer [core-integration-analytics.md](./core-integration-analytics.md) para a distinção completa.\n",
+    "medalhao_markdown": "# Camada Medalhão — Bronze / Silver / Gold\n\n## Visão geral\n\nA **camada medalhão** classifica tabelas físicas em um data lake pelo estágio de processamento e qualidade dos dados:\n\n- **Bronze**: dados brutos, logo após ingestão (staging/raw).\n- **Silver**: dados limpos, conformados, com qualidade garantida.\n- **Gold**: dados prontos para consumo, já agregados e/ou otimizados para casos de uso específicos.\n\nCada camada tem um custo/benefício diferente: Bronze é barato de escrever (imutável, append-only) mas caro de ler sem reprocessamento; Gold é caro de atualizar mas muito rápido de consultar.\n\n---\n\n## Bronze\n\nDados imediatos após ingestão de um sistema de origem ou streaming.\n\n- **Nenhum** processamento — preserva layout nativo da fonte.\n- **Imutável** — só append (histórico completo de eventos).\n- **Barato** de escrever, **caro** de reprocessar em toda leitura.\n\n### Exemplo\n\nNo Mapeamento Técnico do piloto (subdomínio Compras / Autorização):\n\n```\nbronze.purchases__credit_approved     ← Tópico \"approved\" do rail de crédito\nbronze.purchases__credit_denied       ← Tópico \"denied\" do rail de crédito\nbronze.purchases__credit_cancelled    ← Tópico \"cancelled\" do rail de crédito\nbronze.purchases__credit_clearing     ← Tópico \"clearing\" do rail de crédito\nbronze.purchases__credit_processed    ← Tópico \"processed\" do rail de crédito\n```\n\nCada tabela é um tópico Kafka/streaming que chega bruto do sistema de autorização de crédito.\n\n---\n\n## Silver\n\nDados limpos, padronizados, com garantias de qualidade e completude.\n\n- **Processado** — aplicada transformação de negócio.\n- **Mutável** — permite atualizações, correções retroativas.\n- **Uma camada Silver pode conter dois sub-padrões**: **L1** (append-only histórico de eventos) e **L2** (estado atual materializado).\n\n### Silver L1 — Histórico de eventos\n\nHistórico **completo e imutável** de todos os eventos/mudanças de estado de um objeto de negócio.\n\nCada objeto (ex: uma compra) pode ter **N linhas** — uma por cada evento ou status anterior.\n\n**Por quê L1 existe:**\n- Auditoria e investigação exigem histórico completo.\n- Risco e fraude às vezes precisam saber a sequência de eventos (ex: \"esta compra foi initially denied, depois approved?\").\n\n**No piloto:**\n```\nsilver_l1.purchases__credit_purchase  ← Histórico de eventos: cada compra tem N linhas (1 por status: approved, cleared, processed, etc)\nsilver_l1.purchases__debit_purchase   ← Mesmo para débito\n```\n\n### Silver L2 — Estado atual materializado\n\nEstado **atual** de cada objeto, calculado via uma regra de negócio que define a precedência entre status.\n\nCada objeto tem **exatamente 1 linha**.\n\n**Por quê L2 existe:**\n- A maioria das consultas quer só saber \"qual é o status atual desta compra?\" — não o histórico.\n- Se essa lógica fosse recalculada a cada leitura em cima dos N eventos de L1, custaria caro em CPU e criaria risco de times implementarem a regra de forma diferente (divergência de métricas).\n- Materializar uma única vez em L2 economiza custo de leitura e garante consistência.\n\n**A regra de precedência é de NEGÓCIO, não técnica**: ex: \"um status `cancelled` deve prevalecer sobre `clearing` mesmo que chegue depois no tempo?\". Isso define o dono do subdomínio, não o engenheiro de dados.\n\n**No piloto:**\n```\nsilver_l2.purchases__credit_purchase  ← 1 linha por compra, com status final definido pela regra de precedência\nsilver_l2.purchases__debit_purchase   ← Mesmo para débito\n```\n\n### Ponto de compreensão\n\nL1 e L2 **não são redundância** — são dois públicos diferentes:\n\n- L1 para auditoria/investigação (consulta rara, aceita custo computacional).\n- L2 para o caso comum (operação em minutos, rápido).\n\nO time de Integration que monta o `integration_purchase_journey` lê de **L2** (estado final), não L1. O time de Analytics que precisa calcular latência entre eventos (`analytics_latencia_liquidacao_compra`) lê de **L1** (múltiplos timestamps).\n\n---\n\n## Gold\n\nDados prontos para consumo, agregados e/ou otimizados para um caso de uso específico.\n\n- **Altamente processado** — aplicadas todas as transformações de negócio, agregações, enriquecimentos.\n- **Mutável** — atualizações/correções são frequentes.\n- **Caro** de atualizar, mas muito **rápido** de consultar.\n\n### Exemplo\n\nNo piloto:\n\n```\ngold.integration__purchase_journey\n```\n\nCruza `silver_l2.purchases__credit_purchase`, `silver_l2.purchases__debit_purchase`, `silver.purchases__credit_transaction`, `silver.purchases__credit_transaction_type` e `silver_l2.disputes__chargeback` em uma única tabela — grão de compra, com parcelas relacionadas quando existirem — pronta para consumo por Risco, Fraude, Atendimento.\n\nOutputs de Analytics também são Gold:\n```\ngold.analytics__extrato_cliente           ← Legalmente completo e ordenado\ngold.analytics__comportamento_gasto       ← Agregado por cliente, categoria, ticket médio\ngold.analytics__taxa_aprovacao_compra     ← Taxa de aprovação/negação por segmento\n```\n\n---\n\n## Frequência de atualização\n\n- **Bronze**: Streaming contínuo (em minutos ou segundos).\n- **Silver L1**: Incremental na mesma cadência do Bronze (em minutos ou segundos).\n- **Silver L2**: Incremental, mas com delay aceitável (ex: aprovação em minutos, status final em D+1).\n- **Gold**: Batch diário ou mais frequente, dependendo do caso de uso (ex: Analytics é batch diário; Integration herda o SLA do Silver que alimenta).\n\n---\n\n## Nota: não confundir com Core / Integration / Analytics (produto de dados)\n\nA camada medalhão (Bronze/Silver/Gold) classifica **tabelas físicas** por processamento.\n\nA camada de produto de dados (Core/Integration/Analytics) classifica **produtos de dados** por escopo de negócio.\n\nUma mesma tabela física pode conter um ou mais produtos:\n- `silver_l2.purchases__credit_purchase` = uma tabela Silver L2 que é o produto `core_credit_purchase`.\n- `gold.integration__purchase_journey` = uma tabela Gold que é o produto `integration_purchase_journey`.\n\nVer [core-integration-analytics.md](./core-integration-analytics.md) para a distinção completa.\n",
+    "core_integration_analytics_markdown": "# Core / Integration / Analytics — Camadas de Produto de Dados\n\n## Visão geral\n\nA classificação **Core / Integration / Analytics** agrupa produtos de dados (as linhas da aba \"Catálogo V0\") por **escopo de negócio** — quantos bounded contexts (subdomínios) cada produto cruza e para quem ele foi moldado.\n\nCada camada tem um contrato, um dono, consumidores e uma cadência de atualização bem definidos.\n\n---\n\n## Core\n\nUm produto **Core** representa exatamente um bounded context, sem cruzamento.\n\n- **Escopo**: 1 subdomínio.\n- **Contrato**: contém apenas dados que cabem naturalmente dentro de um bounded context específico.\n- **Dono**: o time responsável pelo bounded context.\n- **Consumidores**: principalmente outros produtos (Integration, Analytics) que o usam como insumo; às vezes consumo externo (ex: auditoria, sistemas vizinhos).\n\n### Exemplo\n\n**Subdomínio: Compras / Autorização**\n\n- `core_credit_purchase` — histórico completo de compras de crédito (tabela física: `silver_l2.purchases__credit_purchase`).\n- `core_debit_purchase` — histórico completo de compras de débito (tabela física: `silver_l2.purchases__debit_purchase`).\n\nCada um é isolado — não cruza com o outro, nem com Disputas, nem com Fatura. A tabela fica em Silver L2 (estado atual, materializado) porque é consumida **constantemente** por Integration e Analytics.\n\n---\n\n## Integration\n\nUm produto **Integration** cruza dois ou mais bounded contexts.\n\n- **Escopo**: ≥2 subdomínios.\n- **Contrato**: padroniza schema entre múltiplas fontes (ex: crédito e débito têm layouts nativos diferentes em Bronze; Integration padroniza), enriquece com dados de outros contextos, estabelece relacionamentos de negócio.\n- **Dono**: time responsável pela sinergia entre os contextos (muitas vezes uma equipe de plataforma de dados, não o dono de um único subdomínio).\n- **Consumidores**: Analytics, e ocasionalmente aplicações finais (BI, atendimento, risco).\n\n### Exemplo\n\n**Subdomínio: Compras / Autorização (cruza Crédito + Débito + Disputas)**\n\n- `integration_purchase_journey` — tabela physical: `gold.integration__purchase_journey`.\n\nCruza:\n- `core_credit_purchase` (crédito)\n- `core_debit_purchase` (débito)\n- Detalhamento de parcelas de crédito (de `core_credit_transaction`)\n- Estornos vindo de Disputas (de `core_dispute_chargeback`)\n\nResultado: um único grão de \"compra com sua história completa\", independente se é crédito ou débito, com parcelas relacionadas, com estornos já inclusos. Schema único (sem \"é crédito? então essas colunas; é débito? então aquelas outras\").\n\n---\n\n## Analytics\n\nUm produto **Analytics** é moldado para um **caso de uso específico de consumo final**.\n\n- **Escopo**: pode ser 1 bounded context, mas focado em um aspecto específico (ex: taxa de aprovação, latência, comportamento de gasto).\n- **Contrato**: já agregado, pré-calculado, com dimensões e métricas prontas para o visualizar em dashboard ou report.\n- **Dono**: time de Analytics ou de Dados, em coordenação com o dono do caso de uso (Risk, Marketing, Financeiro).\n- **Consumidores**: stakeholders finais (analistas, gerentes, sistemas de decisão).\n- **Nomenclatura**: em português (porque o público final é menos técnico).\n\n### Exemplo\n\n**Subdomínio: Compras / Autorização**\n\n- `analytics_extrato_cliente` — extrair do cliente legalmente completo (tabela: `gold.analytics__extrato_cliente`). Consumidores: app do cliente, atendimento.\n- `analytics_comportamento_gasto` — métricas agregadas (ticket médio, categorias, frequência). Consumidores: risco de crédito, marketing/rewards.\n- `analytics_taxa_aprovacao_compra` — taxa de aprovação/negação por segmento, canal, bandeira. Consumidores: risco, produto.\n- `analytics_latencia_liquidacao_compra` — tempo médio entre aprovação e liquidação. Consumidores: operações, financeiro (precisa de `silver_l1` com múltiplos timestamps, não `silver_l2`).\n\nCada um é seu próprio produto, com seu próprio propósito, consumidores claros e nomes em português.\n\n---\n\n## Convenção de nomenclatura\n\nProduto Core e Integration usam **inglês**:\n- `core_eligibility_assessment`\n- `integration_purchase_journey`\n\nPor quê? Porque a pessoa que lê é engenheiro/data engineer — tem convenção de inglês.\n\nAnalytics usa **português**:\n- `analytics_extrato_cliente`\n- `analytics_comportamento_gasto`\n- `analytics_taxa_aprovacao_compra`\n\nPor quê? Porque a pessoa que consulta é analista de risco, gerente de marketing, ou contador — menos técnica, menos acostumada a lê nomes em inglês. O termo português reduz fricção.\n\n---\n\n## Tabela resumo\n\n| Camada | Escopo | Dono | Consumidores | Exemplo | Tabela física |\n|--------|--------|------|--------------|---------|----------------|\n| **Core** | 1 bounded context | Time do subdomínio | Integration, Analytics, ocasionalmente auditoria | `core_credit_purchase` (só crédito) | `silver_l2.purchases__credit_purchase` |\n| **Integration** | ≥2 bounded contexts | Time de plataforma de dados | Analytics, ocasionalmente BI/app final | `integration_purchase_journey` (crédito + débito + disputas) | `gold.integration__purchase_journey` |\n| **Analytics** | 1 ou ≥2, mas focado em caso de uso | Time de Analytics / Dados | Stakeholders finais (risco, marketing, financeiro, operações) | `analytics_taxa_aprovacao_compra` (taxa de aprovação) | `gold.analytics__taxa_aprovacao_compra` |\n\n---\n\n## Nota: não confundir com Core (DDD) nem Core (camada medalhão)\n\nTrês significados diferentes de \"Core\":\n\n1. **Core (DDD)** = subdomínio com importância estratégica (ex: Elegibilidade é Core, Cobrança é Support).\n   - Ver [ddd.md](./ddd.md).\n\n2. **Core (camada medalhão)** — não existe explicitamente, mas seria \"stage 0\" de processamento. O termo usado é Bronze/Silver/Gold.\n   - Ver [camada-medalhao.md](./camada-medalhao.md).\n\n3. **Core (produto de dados)** = produto que representa exatamente 1 bounded context, sem cruzamento.\n   - Este arquivo.\n\nUm subdomínio Core (DDD) pode gerar produtos em qualquer camada (Core, Integration, Analytics). Um subdomínio Support pode gerar um produto Core (produto de dados). São eixos independentes.\n",
+    "desambiguacao_core": [
+      {
+        "conceito": "Core (DDD)",
+        "classifica": "Um bounded context do negócio",
+        "valores": "Core, Support, Generic",
+        "exemplo": "Compras / Autorização = Core (diferencial competitivo)"
+      },
+      {
+        "conceito": "Camada Medalhão",
+        "classifica": "Uma tabela física no data lake, por estágio de processamento",
+        "valores": "Bronze (raw), Silver (limpo), Gold (pronto)",
+        "exemplo": "bronze.purchases__credit_approved → silver_l2.purchases__credit_purchase → gold.integration__purchase_journey"
+      },
+      {
+        "conceito": "Core / Integration / Analytics",
+        "classifica": "Um produto de dados, por quantos bounded contexts ele cruza",
+        "valores": "Core (1), Integration (>1), Analytics (caso de uso final)",
+        "exemplo": "core_credit_purchase (1 contexto) vs integration_purchase_journey (cruza crédito + débito + disputas)"
+      }
+    ]
+  },
+  "subdominios": [
+    {
+      "nome": "Elegibilidade",
+      "slug": "elegibilidade",
+      "bounded_context": "Avalia se um cliente pode receber uma oferta de cartão, e sob quais condições",
+      "sistemas_origem": "Motor de elegibilidade / bureaus de crédito",
+      "tipo_ddd": "Core",
+      "tem_mapeamento_tecnico": false,
+      "produtos": [
+        {
+          "camada": "Core",
+          "nome": "core_eligibility_assessment",
+          "descricao": "Resultado da avaliação de política de crédito para uma oferta de cartão",
+          "consumidores": [
+            "Onboarding",
+            "motor de ofertas",
+            "Time de Performance"
+          ],
+          "dono": "Time de Crédito/Elegibilidade",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Integration",
+          "nome": "integration_customer_offer",
+          "descricao": "Cruza elegibilidade com dados cadastrais e histórico para consolidar a oferta personalizada",
+          "consumidores": [
+            "Marketing",
+            "canais de venda",
+            "Time de Performance"
+          ],
+          "dono": "Time de Crédito/Elegibilidade",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_eligibility_conversion",
+          "descricao": "Taxa de conversão de elegíveis em propostas iniciadas",
+          "consumidores": [
+            "Growth",
+            "marketing",
+            "Time de Performance"
+          ],
+          "dono": "Time de Crédito/Elegibilidade",
+          "status": "V0 — a validar"
+        }
+      ]
+    },
+    {
+      "nome": "Onboarding",
+      "slug": "onboarding",
+      "bounded_context": "Conduz a proposta, validação de identidade (KYC) e abertura da conta cartão",
+      "sistemas_origem": "Sistema de proposta, KYC/antifraude cadastral",
+      "tipo_ddd": "Core",
+      "tem_mapeamento_tecnico": false,
+      "produtos": [
+        {
+          "camada": "Core",
+          "nome": "core_card_application",
+          "descricao": "Dados da proposta e etapas do funil de abertura de conta",
+          "consumidores": [
+            "Integration de onboarding",
+            "auditoria",
+            "Time de Performance"
+          ],
+          "dono": "Time de Onboarding",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Core",
+          "nome": "core_kyc_validation",
+          "descricao": "Resultado das validações de identidade e antifraude cadastral",
+          "consumidores": [
+            "Onboarding",
+            "compliance",
+            "Time de Performance"
+          ],
+          "dono": "Time de Onboarding",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Integration",
+          "nome": "integration_onboarding_journey",
+          "descricao": "Une proposta, KYC e elegibilidade em uma linha do tempo única do funil",
+          "consumidores": [
+            "Produto",
+            "atendimento",
+            "BI",
+            "Time de Performance"
+          ],
+          "dono": "Time de Onboarding",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_onboarding_funnel",
+          "descricao": "Taxa de conversão e abandono por etapa do funil de abertura",
+          "consumidores": [
+            "Produto",
+            "marketing",
+            "Time de Performance"
+          ],
+          "dono": "Time de Onboarding",
+          "status": "V0 — a validar"
+        }
+      ]
+    },
+    {
+      "nome": "Conta Cartão",
+      "slug": "conta-cartao",
+      "bounded_context": "Representa o relacionamento contratual entre cliente e produto cartão",
+      "sistemas_origem": "Core banking de contas",
+      "tipo_ddd": "Core",
+      "tem_mapeamento_tecnico": false,
+      "produtos": [
+        {
+          "camada": "Core",
+          "nome": "core_card_account",
+          "descricao": "Estado da conta cartão (ativa, bloqueada, encerrada) e seus atributos contratuais",
+          "consumidores": [
+            "Praticamente todos os demais subdomínios",
+            "Time de Performance"
+          ],
+          "dono": "Time de Conta/Core Banking",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Integration",
+          "nome": "integration_customer_account_view",
+          "descricao": "Cruza a conta cartão com dados cadastrais do cliente (CRM) e outros produtos bancários",
+          "consumidores": [
+            "Atendimento",
+            "visão 360",
+            "Time de Performance"
+          ],
+          "dono": "Time de Conta/Core Banking",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_account_health",
+          "descricao": "Indicadores de saúde da conta: atividade, atraso, engajamento",
+          "consumidores": [
+            "Risco",
+            "retenção",
+            "Time de Performance"
+          ],
+          "dono": "Time de Conta/Core Banking",
+          "status": "V0 — a validar"
+        }
+      ]
+    },
+    {
+      "nome": "Cartão",
+      "slug": "cartao",
+      "bounded_context": "Gerencia o ciclo de vida do plástico/virtual: emissão, ativação, bloqueio, reemissão",
+      "sistemas_origem": "Sistema de emissão de cartões",
+      "tipo_ddd": "Core",
+      "tem_mapeamento_tecnico": false,
+      "produtos": [
+        {
+          "camada": "Core",
+          "nome": "core_card_lifecycle",
+          "descricao": "Eventos de emissão, ativação, bloqueio, reemissão e cancelamento do plástico/virtual",
+          "consumidores": [
+            "Atendimento",
+            "fraude",
+            "onboarding",
+            "Time de Performance"
+          ],
+          "dono": "Time de Emissão",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_card_activation",
+          "descricao": "Tempo até ativação e taxa de ativação por canal de entrega",
+          "consumidores": [
+            "Produto",
+            "operações",
+            "Time de Performance"
+          ],
+          "dono": "Time de Emissão",
+          "status": "V0 — a validar"
+        }
+      ]
+    },
+    {
+      "nome": "Limite",
+      "slug": "limite",
+      "bounded_context": "Concede, ajusta e controla o limite de crédito disponível na conta cartão",
+      "sistemas_origem": "Motor de crédito/limite",
+      "tipo_ddd": "Core",
+      "tem_mapeamento_tecnico": false,
+      "produtos": [
+        {
+          "camada": "Core",
+          "nome": "core_credit_limit",
+          "descricao": "Limite concedido e histórico de alterações (aumento, redução, bloqueio)",
+          "consumidores": [
+            "Compras/autorização",
+            "cobrança",
+            "Time de Performance"
+          ],
+          "dono": "Time de Crédito/Limite",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Integration",
+          "nome": "integration_limit_utilization",
+          "descricao": "Cruza limite concedido com transações e fatura para calcular limite disponível em tempo real",
+          "consumidores": [
+            "Autorização",
+            "app do cliente",
+            "Time de Performance"
+          ],
+          "dono": "Time de Crédito/Limite",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_limit_policy",
+          "descricao": "Efetividade de políticas de aumento/redução de limite sobre inadimplência e uso",
+          "consumidores": [
+            "Risco",
+            "crédito",
+            "Time de Performance"
+          ],
+          "dono": "Time de Crédito/Limite",
+          "status": "V0 — a validar"
+        }
+      ]
+    },
+    {
+      "nome": "Compras / Autorização",
+      "slug": "compras-autorizacao",
+      "bounded_context": "Autoriza e captura as transações realizadas com o cartão, incluindo o plano de parcelamento decidido no ato da compra",
+      "sistemas_origem": "Switch de autorização, rede/bandeira",
+      "tipo_ddd": "Core",
+      "tem_mapeamento_tecnico": true,
+      "produtos": [
+        {
+          "camada": "Core",
+          "nome": "core_credit_purchase",
+          "descricao": "Ciclo de vida da compra de crédito (approved → denied/cancelled → clearing → processed) no rail de crédito, incluindo parcelamento decidido no ato da compra quando aplicável",
+          "consumidores": [
+            "Silver interno",
+            "auditoria",
+            "financeiro",
+            "Time de Performance"
+          ],
+          "dono": "Time de Autorização · Crédito",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Core",
+          "nome": "core_debit_purchase",
+          "descricao": "Ciclo de vida da compra de débito (approved → denied/cancelled → clearing → processed) no rail de débito",
+          "consumidores": [
+            "Silver interno",
+            "auditoria",
+            "financeiro",
+            "Time de Performance"
+          ],
+          "dono": "Time de Autorização · Débito",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Integration",
+          "nome": "integration_purchase_journey",
+          "descricao": "Une purchase de crédito e débito (schema padronizado) com o detalhamento de parcelas do crédito e o estorno vindo de Disputas — grão de compra, com parcelas relacionadas quando existirem",
+          "consumidores": [
+            "Risco",
+            "fraude",
+            "atendimento",
+            "Time de Performance"
+          ],
+          "dono": "Time de Autorização",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_extrato_cliente",
+          "descricao": "Extrato do cliente com completude e ordenação cronológica exigidas legalmente",
+          "consumidores": [
+            "App",
+            "atendimento",
+            "Time de Performance"
+          ],
+          "dono": "Time de Autorização",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_comportamento_gasto",
+          "descricao": "Métricas agregadas de gasto: ticket médio, categorias, frequência",
+          "consumidores": [
+            "Risco de crédito",
+            "marketing/rewards",
+            "Time de Performance"
+          ],
+          "dono": "Time de Autorização",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_taxa_aprovacao_compra",
+          "descricao": "Taxa de aprovação/negação/cancelamento de compras por segmento, canal e bandeira",
+          "consumidores": [
+            "Risco",
+            "produto",
+            "Time de Performance"
+          ],
+          "dono": "Time de Autorização",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_motivos_negacao_compra",
+          "descricao": "Motivos de negação de compra agregados, para calibrar políticas de crédito e limite",
+          "consumidores": [
+            "Risco de crédito",
+            "Time de Limite",
+            "Time de Performance"
+          ],
+          "dono": "Time de Autorização",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_ranking_lojista_categoria",
+          "descricao": "Ranking de lojistas e categorias (MCC) mais usados pelos clientes",
+          "consumidores": [
+            "Marketing",
+            "parcerias comerciais",
+            "Time de Performance"
+          ],
+          "dono": "Time de Autorização",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_adocao_parcelamento",
+          "descricao": "Adoção e perfil de parcelamento nas compras (nº de parcelas, ticket médio parcelado)",
+          "consumidores": [
+            "Produto",
+            "financeiro",
+            "Time de Performance"
+          ],
+          "dono": "Time de Autorização",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_latencia_liquidacao_compra",
+          "descricao": "Tempo entre aprovação e liquidação (clearing/processed) da compra, para monitorar SLA operacional",
+          "consumidores": [
+            "Operações",
+            "financeiro",
+            "Time de Performance"
+          ],
+          "dono": "Time de Autorização",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_mix_canal",
+          "descricao": "Mix de compras por canal (presencial, e-commerce, recorrência)",
+          "consumidores": [
+            "Produto",
+            "marketing",
+            "Time de Performance"
+          ],
+          "dono": "Time de Autorização",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_gasto_internacional",
+          "descricao": "Volume e câmbio de compras internacionais",
+          "consumidores": [
+            "Tesouraria",
+            "compliance",
+            "Time de Performance"
+          ],
+          "dono": "Time de Autorização",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_gasto_elegivel_rewards",
+          "descricao": "Volume de gasto elegível a cashback/pontos, por cliente e categoria",
+          "consumidores": [
+            "Rewards",
+            "marketing",
+            "Time de Performance"
+          ],
+          "dono": "Time de Autorização",
+          "status": "V0 — a validar"
+        }
+      ]
+    },
+    {
+      "nome": "Fatura",
+      "slug": "fatura",
+      "bounded_context": "Gera e fecha a fatura periódica com as transações e encargos do ciclo",
+      "sistemas_origem": "Billing engine",
+      "tipo_ddd": "Core",
+      "tem_mapeamento_tecnico": false,
+      "produtos": [
+        {
+          "camada": "Core",
+          "nome": "core_statement_closing",
+          "descricao": "Fechamento de fatura: valores, datas e encargos do ciclo",
+          "consumidores": [
+            "Pagamento",
+            "cobrança",
+            "app do cliente",
+            "Time de Performance"
+          ],
+          "dono": "Time de Faturamento",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Integration",
+          "nome": "integration_statement_detail",
+          "descricao": "Fatura cruzada com transações, parcelamento e encargos linha a linha",
+          "consumidores": [
+            "App do cliente",
+            "atendimento",
+            "Time de Performance"
+          ],
+          "dono": "Time de Faturamento",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_statement_delinquency",
+          "descricao": "Indicadores de atraso e inadimplência por fatura",
+          "consumidores": [
+            "Cobrança",
+            "risco",
+            "Time de Performance"
+          ],
+          "dono": "Time de Faturamento",
+          "status": "V0 — a validar"
+        }
+      ]
+    },
+    {
+      "nome": "Pagamento da Fatura",
+      "slug": "pagamento-da-fatura",
+      "bounded_context": "Registra e concilia os pagamentos feitos pelo cliente contra a fatura, e estrutura o saldo devedor em parcelas (rotativo) quando o pagamento é parcial",
+      "sistemas_origem": "Sistema de pagamentos/liquidação",
+      "tipo_ddd": "Support",
+      "tem_mapeamento_tecnico": false,
+      "produtos": [
+        {
+          "camada": "Core",
+          "nome": "core_statement_payment",
+          "descricao": "Registros de pagamento: valor, data e forma de pagamento",
+          "consumidores": [
+            "Fatura",
+            "conciliação financeira",
+            "Time de Performance"
+          ],
+          "dono": "Time de Pagamentos",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Core",
+          "nome": "core_revolving_balance_installments",
+          "descricao": "Estrutura de parcelas do saldo rotativo quando o pagamento é parcial, incluindo juros aplicados",
+          "consumidores": [
+            "Fatura",
+            "cobrança",
+            "financeiro",
+            "Time de Performance"
+          ],
+          "dono": "Time de Pagamentos",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Integration",
+          "nome": "integration_payment_reconciliation",
+          "descricao": "Cruza pagamento com fatura para calcular saldo remanescente",
+          "consumidores": [
+            "Cobrança",
+            "financeiro",
+            "Time de Performance"
+          ],
+          "dono": "Time de Pagamentos",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_payment_behavior",
+          "descricao": "Padrão de pagamento do cliente: mínimo, total ou parcial",
+          "consumidores": [
+            "Risco de crédito",
+            "cobrança",
+            "Time de Performance"
+          ],
+          "dono": "Time de Pagamentos",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_revolving_revenue",
+          "descricao": "Receita de juros e encargos do saldo rotativo/parcelado",
+          "consumidores": [
+            "Financeiro/contabilidade",
+            "Time de Performance"
+          ],
+          "dono": "Time de Pagamentos",
+          "status": "V0 — a validar"
+        }
+      ]
+    },
+    {
+      "nome": "Disputas / Chargeback",
+      "slug": "disputas-chargeback",
+      "bounded_context": "Processa contestações de transações e o fluxo de chargeback com a bandeira",
+      "sistemas_origem": "Sistema de disputas",
+      "tipo_ddd": "Support",
+      "tem_mapeamento_tecnico": false,
+      "produtos": [
+        {
+          "camada": "Core",
+          "nome": "core_dispute_chargeback",
+          "descricao": "Registro de disputas abertas e status junto à bandeira",
+          "consumidores": [
+            "Atendimento",
+            "financeiro",
+            "Time de Performance"
+          ],
+          "dono": "Time de Disputas",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Integration",
+          "nome": "integration_dispute_transaction",
+          "descricao": "Cruza a disputa com a transação original e as regras da bandeira aplicável",
+          "consumidores": [
+            "Fraude",
+            "financeiro",
+            "Time de Performance"
+          ],
+          "dono": "Time de Disputas",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_dispute_rate",
+          "descricao": "Taxa de disputa por lojista, categoria e bandeira",
+          "consumidores": [
+            "Risco",
+            "relacionamento com bandeiras",
+            "Time de Performance"
+          ],
+          "dono": "Time de Disputas",
+          "status": "V0 — a validar"
+        }
+      ]
+    },
+    {
+      "nome": "Fraude",
+      "slug": "fraude",
+      "bounded_context": "Avalia risco de fraude em tempo real e retroativamente",
+      "sistemas_origem": "Motor antifraude",
+      "tipo_ddd": "Core",
+      "tem_mapeamento_tecnico": false,
+      "produtos": [
+        {
+          "camada": "Core",
+          "nome": "core_fraud_score",
+          "descricao": "Score bruto de risco de fraude calculado pelo motor antifraude",
+          "consumidores": [
+            "Autorização",
+            "disputas",
+            "Time de Performance"
+          ],
+          "dono": "Time de Fraude",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_fraud_realtime",
+          "descricao": "Score de fraude consumido em tempo real na decisão de autorização",
+          "consumidores": [
+            "Motor antifraude",
+            "autorização",
+            "Time de Performance"
+          ],
+          "dono": "Time de Fraude",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_fraud_losses",
+          "descricao": "Perdas financeiras por fraude, para relatório de risco",
+          "consumidores": [
+            "Risco",
+            "financeiro",
+            "compliance",
+            "Time de Performance"
+          ],
+          "dono": "Time de Fraude",
+          "status": "V0 — a validar"
+        }
+      ]
+    },
+    {
+      "nome": "Cobrança",
+      "slug": "cobranca",
+      "bounded_context": "Trata contas em atraso, régua de contato e negociação",
+      "sistemas_origem": "Sistema de cobrança/régua",
+      "tipo_ddd": "Support",
+      "tem_mapeamento_tecnico": false,
+      "produtos": [
+        {
+          "camada": "Core",
+          "nome": "core_collections_status",
+          "descricao": "Estágio de cobrança: régua, tentativas de contato, acordo firmado",
+          "consumidores": [
+            "Atendimento",
+            "financeiro",
+            "Time de Performance"
+          ],
+          "dono": "Time de Cobrança",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Integration",
+          "nome": "integration_delinquent_customer",
+          "descricao": "Cruza cobrança com conta, fatura e limite para visão consolidada de risco",
+          "consumidores": [
+            "Risco",
+            "crédito",
+            "Time de Performance"
+          ],
+          "dono": "Time de Cobrança",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_collections_effectiveness",
+          "descricao": "Taxa de recuperação por régua e canal de cobrança",
+          "consumidores": [
+            "Risco",
+            "operações de cobrança",
+            "Time de Performance"
+          ],
+          "dono": "Time de Cobrança",
+          "status": "V0 — a validar"
+        }
+      ]
+    },
+    {
+      "nome": "Benefícios / Rewards",
+      "slug": "beneficios-rewards",
+      "bounded_context": "Administra pontos, cashback e resgates associados ao uso do cartão",
+      "sistemas_origem": "Plataforma de rewards",
+      "tipo_ddd": "Generic",
+      "tem_mapeamento_tecnico": false,
+      "produtos": [
+        {
+          "camada": "Core",
+          "nome": "core_points_cashback",
+          "descricao": "Saldo e eventos de acúmulo/resgate de pontos ou cashback",
+          "consumidores": [
+            "App do cliente",
+            "parceiros",
+            "Time de Performance"
+          ],
+          "dono": "Time de Rewards",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_rewards_engagement",
+          "descricao": "Uso de benefícios por segmento de cliente",
+          "consumidores": [
+            "Marketing",
+            "produto",
+            "Time de Performance"
+          ],
+          "dono": "Time de Rewards",
+          "status": "V0 — a validar"
+        }
+      ]
+    },
+    {
+      "nome": "Encerramento",
+      "slug": "encerramento",
+      "bounded_context": "Processa o cancelamento definitivo de cartão ou conta",
+      "sistemas_origem": "Core banking de contas",
+      "tipo_ddd": "Support",
+      "tem_mapeamento_tecnico": false,
+      "produtos": [
+        {
+          "camada": "Core",
+          "nome": "core_account_closure",
+          "descricao": "Registro e motivo de encerramento de cartão ou conta",
+          "consumidores": [
+            "Atendimento",
+            "compliance",
+            "Time de Performance"
+          ],
+          "dono": "Time de Conta/Core Banking",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_card_churn",
+          "descricao": "Taxa e motivos de churn do produto cartão",
+          "consumidores": [
+            "Produto",
+            "retenção",
+            "Time de Performance"
+          ],
+          "dono": "Time de Conta/Core Banking",
+          "status": "V0 — a validar"
+        }
+      ]
+    },
+    {
+      "nome": "Anuidade",
+      "slug": "anuidade",
+      "bounded_context": "Calcula, cobra e administra isenções/negociação da anuidade do cartão",
+      "sistemas_origem": "Motor de anuidade (regras de isenção e negociação)",
+      "tipo_ddd": "Support",
+      "tem_mapeamento_tecnico": false,
+      "produtos": [
+        {
+          "camada": "Core",
+          "nome": "core_annual_fee_rule",
+          "descricao": "Regras de cálculo, isenção por gasto mínimo e negociação de anuidade aplicadas à conta",
+          "consumidores": [
+            "Fatura",
+            "atendimento",
+            "Time de Performance"
+          ],
+          "dono": "Time de Anuidade",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Integration",
+          "nome": "integration_annual_fee_statement",
+          "descricao": "Cruza a decisão de anuidade (cobrar, isentar, parcelar) com a fatura onde ela é lançada",
+          "consumidores": [
+            "Faturamento",
+            "financeiro",
+            "Time de Performance"
+          ],
+          "dono": "Time de Anuidade",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_annual_fee_waiver",
+          "descricao": "Taxa de isenção concedida e seu impacto em receita, por segmento de cliente",
+          "consumidores": [
+            "Financeiro",
+            "marketing/retenção",
+            "Time de Performance"
+          ],
+          "dono": "Time de Anuidade",
+          "status": "V0 — a validar"
+        }
+      ]
+    },
+    {
+      "nome": "Entrega",
+      "slug": "entrega",
+      "bounded_context": "Rastreia a entrega física do cartão, do despacho até a confirmação de recebimento",
+      "sistemas_origem": "Integração com transportadora/Correios",
+      "tipo_ddd": "Support",
+      "tem_mapeamento_tecnico": false,
+      "produtos": [
+        {
+          "camada": "Core",
+          "nome": "core_delivery_tracking",
+          "descricao": "Eventos de rastreio (despachado, em trânsito, entregue, tentativa falha) por transportadora",
+          "consumidores": [
+            "Atendimento",
+            "emissão",
+            "Time de Performance"
+          ],
+          "dono": "Time de Logística",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Integration",
+          "nome": "integration_card_delivery",
+          "descricao": "Cruza o rastreio de entrega com o ciclo de vida do cartão (emissão → entrega → ativação)",
+          "consumidores": [
+            "Emissão",
+            "onboarding",
+            "Time de Performance"
+          ],
+          "dono": "Time de Logística",
+          "status": "V0 — a validar"
+        },
+        {
+          "camada": "Analytics",
+          "nome": "analytics_delivery_sla",
+          "descricao": "Tempo médio de entrega e taxa de insucesso por transportadora e região",
+          "consumidores": [
+            "Operações",
+            "atendimento",
+            "Time de Performance"
+          ],
+          "dono": "Time de Logística",
+          "status": "V0 — a validar"
+        }
+      ]
+    }
+  ],
+  "compras_autorizacao": {
+    "notas": [
+      {
+        "titulo": "Correção de nomenclatura",
+        "texto": "Os 5 tópicos de status (approved/denied/cancelled/clearing/processed) alimentam a fonte 'purchase' (grão de compra), não 'transaction'. A fonte 'transaction' é outra coisa — só existe em crédito, tópico único, carrega o detalhamento de parcelas (grão de parcela, N por compra). Dentro de 'transaction', o ID da compra vem preenchido na linha da compra e nulo nas linhas de parcela — sugere mistura de cabeçalho e detalhe na mesma fonte, a resolver no desenho de schema físico."
+      },
+      {
+        "titulo": "Pendências de validação",
+        "texto": "(1) A regra de precedência de status em L2 é regra de NEGÓCIO, não dedup técnico por timestamp de chegada — precisa ser definida pelo time de domínio (ex: um cancelled deve sempre prevalecer mesmo chegando depois de um clearing?). (2) Se risco/fraude/atendimento também precisam do histórico completo, além do estado atual — hoje não confirmado. (3) Se débito tem equivalente ao tópico transaction_type do crédito — hoje não confirmado."
+      },
+      {
+        "titulo": "Produto vs. insumo interno",
+        "texto": "Sem consumidor externo confirmado, core_credit_transaction e core_credit_transaction_type não aparecem como linha própria no Catálogo V0 — continuam Core (fonte única, sem cruzamento de domínio), só não são produtos expostos com contrato/SLA próprio; são insumo interno de integration_purchase_journey. Padrão aplicado na dúvida: só expor como produto quando houver evidência real de consumo externo; promover depois se aparecer."
+      }
+    ],
+    "tabelas": [
+      {
+        "nome": "bronze.purchases__credit_approved",
+        "produto": "core_credit_purchase",
+        "camada_produto": "Core",
+        "camada_medalhao": "Bronze",
+        "papel": "Tópico raw (staging)",
+        "pipeline": "Streaming ingestion (platform)",
+        "frequencia": "Streaming contínuo",
+        "fonte_origem": "Fonte: rail de crédito, tópico approved",
+        "lineage_upstream": [],
+        "colunas": [
+          {
+            "nome": "event_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true,
+            "descricao": "Identificador único do evento"
+          },
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "descricao": "Identificador da compra"
+          },
+          {
+            "nome": "card_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "descricao": "Identificador do cartão"
+          },
+          {
+            "nome": "customer_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "descricao": "Identificador do cliente"
+          },
+          {
+            "nome": "status",
+            "tipo": "TEXT",
+            "nullable": false,
+            "descricao": "Status (approved)"
+          },
+          {
+            "nome": "amount",
+            "tipo": "REAL",
+            "nullable": false,
+            "descricao": "Valor da compra em centavos"
+          },
+          {
+            "nome": "installments",
+            "tipo": "INTEGER",
+            "nullable": true,
+            "descricao": "Número de parcelas (crédito)"
+          },
+          {
+            "nome": "merchant_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "descricao": "Identificador do lojista"
+          },
+          {
+            "nome": "merchant_category_code",
+            "tipo": "TEXT",
+            "nullable": false,
+            "descricao": "MCC do lojista"
+          },
+          {
+            "nome": "channel",
+            "tipo": "TEXT",
+            "nullable": false,
+            "descricao": "Canal da compra (presencial, ecommerce, recorrencia)"
+          },
+          {
+            "nome": "event_timestamp",
+            "tipo": "TEXT",
+            "nullable": false,
+            "descricao": "Timestamp ISO 8601 do evento"
+          },
+          {
+            "nome": "ingest_timestamp",
+            "tipo": "TEXT",
+            "nullable": false,
+            "descricao": "Timestamp de ingestão"
+          }
+        ],
+        "lineage_downstream": [
+          "silver_l1.purchases__credit_purchase"
+        ]
+      },
+      {
+        "nome": "bronze.purchases__credit_denied",
+        "produto": "core_credit_purchase",
+        "camada_produto": "Core",
+        "camada_medalhao": "Bronze",
+        "papel": "Tópico raw (staging)",
+        "pipeline": "Streaming ingestion (platform)",
+        "frequencia": "Streaming contínuo",
+        "fonte_origem": "Fonte: rail de crédito, tópico denied",
+        "lineage_upstream": [],
+        "colunas": [
+          {
+            "nome": "event_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "card_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "customer_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "status",
+            "tipo": "TEXT",
+            "nullable": false,
+            "descricao": "Status (denied)"
+          },
+          {
+            "nome": "amount",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "denial_reason",
+            "tipo": "TEXT",
+            "nullable": false,
+            "descricao": "Motivo da negação (limite, fraude, etc)"
+          },
+          {
+            "nome": "merchant_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_category_code",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "channel",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "event_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "ingest_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": [
+          "silver_l1.purchases__credit_purchase"
+        ]
+      },
+      {
+        "nome": "bronze.purchases__credit_cancelled",
+        "produto": "core_credit_purchase",
+        "camada_produto": "Core",
+        "camada_medalhao": "Bronze",
+        "papel": "Tópico raw (staging)",
+        "pipeline": "Streaming ingestion (platform)",
+        "frequencia": "Streaming contínuo",
+        "fonte_origem": "Fonte: rail de crédito, tópico cancelled",
+        "lineage_upstream": [],
+        "colunas": [
+          {
+            "nome": "event_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "card_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "customer_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "status",
+            "tipo": "TEXT",
+            "nullable": false,
+            "descricao": "Status (cancelled)"
+          },
+          {
+            "nome": "amount",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "cancellation_reason",
+            "tipo": "TEXT",
+            "nullable": true,
+            "descricao": "Motivo do cancelamento"
+          },
+          {
+            "nome": "merchant_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_category_code",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "channel",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "event_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "ingest_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": [
+          "silver_l1.purchases__credit_purchase"
+        ]
+      },
+      {
+        "nome": "bronze.purchases__credit_clearing",
+        "produto": "core_credit_purchase",
+        "camada_produto": "Core",
+        "camada_medalhao": "Bronze",
+        "papel": "Tópico raw (staging)",
+        "pipeline": "Streaming ingestion (platform)",
+        "frequencia": "Streaming contínuo",
+        "fonte_origem": "Fonte: rail de crédito, tópico clearing",
+        "lineage_upstream": [],
+        "colunas": [
+          {
+            "nome": "event_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "card_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "customer_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "status",
+            "tipo": "TEXT",
+            "nullable": false,
+            "descricao": "Status (clearing)"
+          },
+          {
+            "nome": "amount",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_category_code",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "event_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "ingest_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": [
+          "silver_l1.purchases__credit_purchase"
+        ]
+      },
+      {
+        "nome": "bronze.purchases__credit_processed",
+        "produto": "core_credit_purchase",
+        "camada_produto": "Core",
+        "camada_medalhao": "Bronze",
+        "papel": "Tópico raw (staging)",
+        "pipeline": "Streaming ingestion (platform)",
+        "frequencia": "Streaming contínuo",
+        "fonte_origem": "Fonte: rail de crédito, tópico processed",
+        "lineage_upstream": [],
+        "colunas": [
+          {
+            "nome": "event_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "card_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "customer_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "status",
+            "tipo": "TEXT",
+            "nullable": false,
+            "descricao": "Status (processed)"
+          },
+          {
+            "nome": "amount",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_category_code",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "network_fee",
+            "tipo": "REAL",
+            "nullable": true,
+            "descricao": "Taxa de processamento da rede"
+          },
+          {
+            "nome": "event_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "ingest_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": [
+          "silver_l1.purchases__credit_purchase"
+        ]
+      },
+      {
+        "nome": "silver_l1.purchases__credit_purchase",
+        "produto": "core_credit_purchase",
+        "camada_produto": "Core",
+        "camada_medalhao": "Silver L1",
+        "papel": "Histórico de eventos de status (append-only, N linhas por compra)",
+        "pipeline": "pipeline_core_purchases_credit_purchase",
+        "frequencia": "Incremental: aprovação em minutos, status final (processed) em D+1",
+        "fonte_origem": "",
+        "lineage_upstream": [
+          "bronze.purchases__credit_approved",
+          "bronze.purchases__credit_denied",
+          "bronze.purchases__credit_cancelled",
+          "bronze.purchases__credit_clearing",
+          "bronze.purchases__credit_processed"
+        ],
+        "colunas": [
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "event_sequence",
+            "tipo": "INTEGER",
+            "nullable": false,
+            "descricao": "Sequência do evento"
+          },
+          {
+            "nome": "status",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "event_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "card_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "customer_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "amount",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "processed_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": [
+          "silver_l2.purchases__credit_purchase",
+          "gold.analytics__latencia_liquidacao_compra"
+        ]
+      },
+      {
+        "nome": "silver_l2.purchases__credit_purchase",
+        "produto": "core_credit_purchase",
+        "camada_produto": "Core",
+        "camada_medalhao": "Silver L2",
+        "papel": "Interface exposta do produto — estado atual via regra de precedência de status (regra de negócio, não dedup técnico) — 1 linha por compra",
+        "pipeline": "pipeline_core_purchases_credit_purchase",
+        "frequencia": "Incremental: aprovação em minutos, status final (processed) em D+1",
+        "fonte_origem": "",
+        "lineage_upstream": [
+          "silver_l1.purchases__credit_purchase"
+        ],
+        "colunas": [
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "status",
+            "tipo": "TEXT",
+            "nullable": false,
+            "descricao": "Status final (após regra de precedência)"
+          },
+          {
+            "nome": "status_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "card_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "customer_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "amount",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_category_code",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "channel",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "event_count",
+            "tipo": "INTEGER",
+            "nullable": false,
+            "descricao": "Total de eventos até o status final"
+          }
+        ],
+        "lineage_downstream": [
+          "gold.integration__purchase_journey",
+          "gold.analytics__taxa_aprovacao_compra",
+          "gold.analytics__motivos_negacao_compra"
+        ]
+      },
+      {
+        "nome": "bronze.purchases__debit_approved",
+        "produto": "core_debit_purchase",
+        "camada_produto": "Core",
+        "camada_medalhao": "Bronze",
+        "papel": "Tópico raw (staging)",
+        "pipeline": "Streaming ingestion (platform)",
+        "frequencia": "Streaming contínuo",
+        "fonte_origem": "Fonte: rail de débito, tópico approved",
+        "lineage_upstream": [],
+        "colunas": [
+          {
+            "nome": "event_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "card_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "customer_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "status",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "amount",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_category_code",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "channel",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "event_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "ingest_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": [
+          "silver_l1.purchases__debit_purchase"
+        ]
+      },
+      {
+        "nome": "bronze.purchases__debit_denied",
+        "produto": "core_debit_purchase",
+        "camada_produto": "Core",
+        "camada_medalhao": "Bronze",
+        "papel": "Tópico raw (staging)",
+        "pipeline": "Streaming ingestion (platform)",
+        "frequencia": "Streaming contínuo",
+        "fonte_origem": "Fonte: rail de débito, tópico denied",
+        "lineage_upstream": [],
+        "colunas": [
+          {
+            "nome": "event_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "card_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "customer_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "status",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "amount",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "denial_reason",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_category_code",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "channel",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "event_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "ingest_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": [
+          "silver_l1.purchases__debit_purchase"
+        ]
+      },
+      {
+        "nome": "bronze.purchases__debit_cancelled",
+        "produto": "core_debit_purchase",
+        "camada_produto": "Core",
+        "camada_medalhao": "Bronze",
+        "papel": "Tópico raw (staging)",
+        "pipeline": "Streaming ingestion (platform)",
+        "frequencia": "Streaming contínuo",
+        "fonte_origem": "Fonte: rail de débito, tópico cancelled",
+        "lineage_upstream": [],
+        "colunas": [
+          {
+            "nome": "event_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "card_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "customer_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "status",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "amount",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "cancellation_reason",
+            "tipo": "TEXT",
+            "nullable": true
+          },
+          {
+            "nome": "merchant_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_category_code",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "channel",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "event_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "ingest_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": [
+          "silver_l1.purchases__debit_purchase"
+        ]
+      },
+      {
+        "nome": "bronze.purchases__debit_clearing",
+        "produto": "core_debit_purchase",
+        "camada_produto": "Core",
+        "camada_medalhao": "Bronze",
+        "papel": "Tópico raw (staging)",
+        "pipeline": "Streaming ingestion (platform)",
+        "frequencia": "Streaming contínuo",
+        "fonte_origem": "Fonte: rail de débito, tópico clearing",
+        "lineage_upstream": [],
+        "colunas": [
+          {
+            "nome": "event_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "card_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "customer_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "status",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "amount",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_category_code",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "event_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "ingest_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": [
+          "silver_l1.purchases__debit_purchase"
+        ]
+      },
+      {
+        "nome": "bronze.purchases__debit_processed",
+        "produto": "core_debit_purchase",
+        "camada_produto": "Core",
+        "camada_medalhao": "Bronze",
+        "papel": "Tópico raw (staging)",
+        "pipeline": "Streaming ingestion (platform)",
+        "frequencia": "Streaming contínuo",
+        "fonte_origem": "Fonte: rail de débito, tópico processed",
+        "lineage_upstream": [],
+        "colunas": [
+          {
+            "nome": "event_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "card_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "customer_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "status",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "amount",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_category_code",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "network_fee",
+            "tipo": "REAL",
+            "nullable": true
+          },
+          {
+            "nome": "event_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "ingest_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": [
+          "silver_l1.purchases__debit_purchase"
+        ]
+      },
+      {
+        "nome": "silver_l1.purchases__debit_purchase",
+        "produto": "core_debit_purchase",
+        "camada_produto": "Core",
+        "camada_medalhao": "Silver L1",
+        "papel": "Histórico de eventos de status (append-only, N linhas por compra)",
+        "pipeline": "pipeline_core_purchases_debit_purchase",
+        "frequencia": "Incremental: aprovação em minutos, status final (processed) em D+1",
+        "fonte_origem": "",
+        "lineage_upstream": [
+          "bronze.purchases__debit_approved",
+          "bronze.purchases__debit_denied",
+          "bronze.purchases__debit_cancelled",
+          "bronze.purchases__debit_clearing",
+          "bronze.purchases__debit_processed"
+        ],
+        "colunas": [
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "event_sequence",
+            "tipo": "INTEGER",
+            "nullable": false
+          },
+          {
+            "nome": "status",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "event_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "card_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "customer_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "amount",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "processed_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": [
+          "silver_l2.purchases__debit_purchase",
+          "gold.analytics__latencia_liquidacao_compra"
+        ]
+      },
+      {
+        "nome": "silver_l2.purchases__debit_purchase",
+        "produto": "core_debit_purchase",
+        "camada_produto": "Core",
+        "camada_medalhao": "Silver L2",
+        "papel": "Interface exposta do produto — estado atual via regra de precedência de status (regra de negócio, não dedup técnico) — 1 linha por compra",
+        "pipeline": "pipeline_core_purchases_debit_purchase",
+        "frequencia": "Incremental: aprovação em minutos, status final (processed) em D+1",
+        "fonte_origem": "",
+        "lineage_upstream": [
+          "silver_l1.purchases__debit_purchase"
+        ],
+        "colunas": [
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "status",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "status_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "card_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "customer_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "amount",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_category_code",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "channel",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "event_count",
+            "tipo": "INTEGER",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": [
+          "gold.integration__purchase_journey",
+          "gold.analytics__taxa_aprovacao_compra",
+          "gold.analytics__motivos_negacao_compra"
+        ]
+      },
+      {
+        "nome": "bronze.purchases__credit_transaction",
+        "produto": "core_credit_transaction",
+        "camada_produto": "Core",
+        "camada_medalhao": "Bronze",
+        "papel": "Tópico raw (staging)",
+        "pipeline": "Streaming ingestion (platform)",
+        "frequencia": "Streaming contínuo",
+        "fonte_origem": "Fonte: rail de crédito, tópico único 'transaction' (compra + parcelas)",
+        "lineage_upstream": [],
+        "colunas": [
+          {
+            "nome": "transaction_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "installment_number",
+            "tipo": "INTEGER",
+            "nullable": false,
+            "descricao": "Número da parcela (1, 2, 3...)"
+          },
+          {
+            "nome": "installment_amount",
+            "tipo": "REAL",
+            "nullable": false,
+            "descricao": "Valor da parcela"
+          },
+          {
+            "nome": "installment_interest_rate",
+            "tipo": "REAL",
+            "nullable": true,
+            "descricao": "Taxa de juros da parcela"
+          },
+          {
+            "nome": "transaction_type_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "descricao": "Referência para transaction_type (vista, parcelado_sem_juros, parcelado_com_juros)"
+          }
+        ],
+        "lineage_downstream": [
+          "silver.purchases__credit_transaction"
+        ]
+      },
+      {
+        "nome": "silver.purchases__credit_transaction",
+        "produto": "core_credit_transaction",
+        "camada_produto": "Core",
+        "camada_medalhao": "Silver",
+        "papel": "Insumo interno de integration_purchase_journey (não é produto catalogado)",
+        "pipeline": "pipeline_integration_purchase_journey",
+        "frequencia": "Incremental, mesma cadência da fonte",
+        "fonte_origem": "",
+        "lineage_upstream": [
+          "bronze.purchases__credit_transaction"
+        ],
+        "colunas": [
+          {
+            "nome": "transaction_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "installment_number",
+            "tipo": "INTEGER",
+            "nullable": false
+          },
+          {
+            "nome": "installment_amount",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "installment_interest_rate",
+            "tipo": "REAL",
+            "nullable": true
+          },
+          {
+            "nome": "transaction_type_id",
+            "tipo": "TEXT",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": [
+          "gold.integration__purchase_journey",
+          "gold.analytics__adocao_parcelamento"
+        ]
+      },
+      {
+        "nome": "bronze.purchases__credit_transaction_type",
+        "produto": "core_credit_transaction_type",
+        "camada_produto": "Core",
+        "camada_medalhao": "Bronze",
+        "papel": "Tópico raw (staging) — dimensão",
+        "pipeline": "Streaming ingestion (platform)",
+        "frequencia": "Baixa frequência (dimensão muda pouco)",
+        "fonte_origem": "Fonte: rail de crédito, tópico 'transaction_type'",
+        "lineage_upstream": [],
+        "colunas": [
+          {
+            "nome": "transaction_type_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "name",
+            "tipo": "TEXT",
+            "nullable": false,
+            "descricao": "Nome do tipo (à vista, parcelado sem juros, parcelado com juros)"
+          },
+          {
+            "nome": "description",
+            "tipo": "TEXT",
+            "nullable": true
+          }
+        ],
+        "lineage_downstream": [
+          "silver.purchases__credit_transaction_type"
+        ]
+      },
+      {
+        "nome": "silver.purchases__credit_transaction_type",
+        "produto": "core_credit_transaction_type",
+        "camada_produto": "Core",
+        "camada_medalhao": "Silver",
+        "papel": "Insumo interno de integration_purchase_journey (não é produto catalogado)",
+        "pipeline": "pipeline_integration_purchase_journey",
+        "frequencia": "Batch diário (dimensão de baixa mudança)",
+        "fonte_origem": "",
+        "lineage_upstream": [
+          "bronze.purchases__credit_transaction_type"
+        ],
+        "colunas": [
+          {
+            "nome": "transaction_type_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "name",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "description",
+            "tipo": "TEXT",
+            "nullable": true
+          }
+        ],
+        "lineage_downstream": [
+          "gold.integration__purchase_journey"
+        ]
+      },
+      {
+        "nome": "gold.integration__purchase_journey",
+        "produto": "integration_purchase_journey",
+        "camada_produto": "Integration",
+        "camada_medalhao": "Gold",
+        "papel": "Interface exposta do produto — grão de compra, com parcelas relacionadas quando existirem",
+        "pipeline": "pipeline_integration_purchase_journey",
+        "frequencia": "Herda o SLA incremental dos Core: parcial em minutos, completo em D+1",
+        "fonte_origem": "",
+        "lineage_upstream": [
+          "silver_l2.purchases__credit_purchase",
+          "silver_l2.purchases__debit_purchase",
+          "silver.purchases__credit_transaction",
+          "silver.purchases__credit_transaction_type",
+          "silver_l2.disputes__chargeback"
+        ],
+        "colunas": [
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "rail",
+            "tipo": "TEXT",
+            "nullable": false,
+            "descricao": "Tipo de transação (credit ou debit)"
+          },
+          {
+            "nome": "status",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "status_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "card_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "customer_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "amount",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_category_code",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "channel",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "installments",
+            "tipo": "INTEGER",
+            "nullable": true
+          },
+          {
+            "nome": "reversal_amount",
+            "tipo": "REAL",
+            "nullable": true,
+            "descricao": "Valor de estorno (disputas)"
+          },
+          {
+            "nome": "created_at",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "updated_at",
+            "tipo": "TEXT",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": [
+          "gold.analytics__extrato_cliente",
+          "gold.analytics__comportamento_gasto",
+          "gold.analytics__ranking_lojista_categoria",
+          "gold.analytics__adocao_parcelamento",
+          "gold.analytics__mix_canal",
+          "gold.analytics__gasto_internacional",
+          "gold.analytics__gasto_elegivel_rewards"
+        ]
+      },
+      {
+        "nome": "gold.analytics__extrato_cliente",
+        "produto": "analytics_extrato_cliente",
+        "camada_produto": "Analytics",
+        "camada_medalhao": "Gold",
+        "papel": "Interface exposta do produto",
+        "pipeline": "pipeline_analytics_extrato_cliente",
+        "frequencia": "Incremental, mesma cadência de integration_purchase_journey (completude legal)",
+        "fonte_origem": "",
+        "lineage_upstream": [
+          "gold.integration__purchase_journey"
+        ],
+        "colunas": [
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "customer_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "amount",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "status",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "transaction_date",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "merchant_name",
+            "tipo": "TEXT",
+            "nullable": true
+          }
+        ],
+        "lineage_downstream": []
+      },
+      {
+        "nome": "gold.analytics__comportamento_gasto",
+        "produto": "analytics_comportamento_gasto",
+        "camada_produto": "Analytics",
+        "camada_medalhao": "Gold",
+        "papel": "Interface exposta do produto",
+        "pipeline": "pipeline_analytics_comportamento_gasto",
+        "frequencia": "Batch diário",
+        "fonte_origem": "",
+        "lineage_upstream": [
+          "gold.integration__purchase_journey"
+        ],
+        "colunas": [
+          {
+            "nome": "customer_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "total_spent",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "average_ticket",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "purchase_count",
+            "tipo": "INTEGER",
+            "nullable": false
+          },
+          {
+            "nome": "top_category",
+            "tipo": "TEXT",
+            "nullable": true
+          }
+        ],
+        "lineage_downstream": []
+      },
+      {
+        "nome": "gold.analytics__taxa_aprovacao_compra",
+        "produto": "analytics_taxa_aprovacao_compra",
+        "camada_produto": "Analytics",
+        "camada_medalhao": "Gold",
+        "papel": "Interface exposta do produto",
+        "pipeline": "pipeline_analytics_taxa_aprovacao_compra",
+        "frequencia": "Batch diário",
+        "fonte_origem": "",
+        "lineage_upstream": [
+          "silver_l2.purchases__credit_purchase",
+          "silver_l2.purchases__debit_purchase"
+        ],
+        "colunas": [
+          {
+            "nome": "periodo",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "segmento",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "total_compras",
+            "tipo": "INTEGER",
+            "nullable": false
+          },
+          {
+            "nome": "compras_aprovadas",
+            "tipo": "INTEGER",
+            "nullable": false
+          },
+          {
+            "nome": "compras_negadas",
+            "tipo": "INTEGER",
+            "nullable": false
+          },
+          {
+            "nome": "taxa_aprovacao",
+            "tipo": "REAL",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": []
+      },
+      {
+        "nome": "gold.analytics__motivos_negacao_compra",
+        "produto": "analytics_motivos_negacao_compra",
+        "camada_produto": "Analytics",
+        "camada_medalhao": "Gold",
+        "papel": "Interface exposta do produto",
+        "pipeline": "pipeline_analytics_motivos_negacao_compra",
+        "frequencia": "Batch diário",
+        "fonte_origem": "",
+        "lineage_upstream": [
+          "silver_l2.purchases__credit_purchase",
+          "silver_l2.purchases__debit_purchase"
+        ],
+        "colunas": [
+          {
+            "nome": "denial_reason",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "count",
+            "tipo": "INTEGER",
+            "nullable": false
+          },
+          {
+            "nome": "percentage",
+            "tipo": "REAL",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": []
+      },
+      {
+        "nome": "gold.analytics__ranking_lojista_categoria",
+        "produto": "analytics_ranking_lojista_categoria",
+        "camada_produto": "Analytics",
+        "camada_medalhao": "Gold",
+        "papel": "Interface exposta do produto",
+        "pipeline": "pipeline_analytics_ranking_lojista_categoria",
+        "frequencia": "Batch diário/semanal",
+        "fonte_origem": "",
+        "lineage_upstream": [
+          "gold.integration__purchase_journey"
+        ],
+        "colunas": [
+          {
+            "nome": "merchant_category_code",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "merchant_name",
+            "tipo": "TEXT",
+            "nullable": true
+          },
+          {
+            "nome": "count",
+            "tipo": "INTEGER",
+            "nullable": false
+          },
+          {
+            "nome": "total_spent",
+            "tipo": "REAL",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": []
+      },
+      {
+        "nome": "gold.analytics__adocao_parcelamento",
+        "produto": "analytics_adocao_parcelamento",
+        "camada_produto": "Analytics",
+        "camada_medalhao": "Gold",
+        "papel": "Interface exposta do produto — ATENÇÃO: consome core_credit_transaction diretamente, hoje marcado como insumo interno (não produto). Este é exatamente o tipo de consumidor externo real que justificaria promovê-lo a produto Core próprio, com contrato e dono formal.",
+        "pipeline": "pipeline_analytics_adocao_parcelamento",
+        "frequencia": "Batch diário",
+        "fonte_origem": "",
+        "lineage_upstream": [
+          "silver.purchases__credit_transaction",
+          "gold.integration__purchase_journey"
+        ],
+        "colunas": [
+          {
+            "nome": "installment_count",
+            "tipo": "INTEGER",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "total_compras",
+            "tipo": "INTEGER",
+            "nullable": false
+          },
+          {
+            "nome": "average_amount",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "percentage",
+            "tipo": "REAL",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": []
+      },
+      {
+        "nome": "gold.analytics__latencia_liquidacao_compra",
+        "produto": "analytics_latencia_liquidacao_compra",
+        "camada_produto": "Analytics",
+        "camada_medalhao": "Gold",
+        "papel": "Interface exposta do produto — consome L1 (histórico de eventos), não L2, porque precisa de múltiplos timestamps por compra (approved_at, clearing_at, processed_at) para calcular a latência entre estágios",
+        "pipeline": "pipeline_analytics_latencia_liquidacao_compra",
+        "frequencia": "Batch diário",
+        "fonte_origem": "",
+        "lineage_upstream": [
+          "silver_l1.purchases__credit_purchase",
+          "silver_l1.purchases__debit_purchase"
+        ],
+        "colunas": [
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "approved_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "clearing_timestamp",
+            "tipo": "TEXT",
+            "nullable": true
+          },
+          {
+            "nome": "processed_timestamp",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "latencia_minutos",
+            "tipo": "INTEGER",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": []
+      },
+      {
+        "nome": "gold.analytics__mix_canal",
+        "produto": "analytics_mix_canal",
+        "camada_produto": "Analytics",
+        "camada_medalhao": "Gold",
+        "papel": "Interface exposta do produto",
+        "pipeline": "pipeline_analytics_mix_canal",
+        "frequencia": "Batch diário",
+        "fonte_origem": "",
+        "lineage_upstream": [
+          "gold.integration__purchase_journey"
+        ],
+        "colunas": [
+          {
+            "nome": "channel",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "count",
+            "tipo": "INTEGER",
+            "nullable": false
+          },
+          {
+            "nome": "percentage",
+            "tipo": "REAL",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": []
+      },
+      {
+        "nome": "gold.analytics__gasto_internacional",
+        "produto": "analytics_gasto_internacional",
+        "camada_produto": "Analytics",
+        "camada_medalhao": "Gold",
+        "papel": "Interface exposta do produto — PENDÊNCIA: taxa de câmbio provavelmente vem de uma fonte de Tesouraria ainda não mapeada",
+        "pipeline": "pipeline_analytics_gasto_internacional",
+        "frequencia": "Batch diário",
+        "fonte_origem": "",
+        "lineage_upstream": [
+          "gold.integration__purchase_journey"
+        ],
+        "colunas": [
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "amount_usd",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "amount_brl",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "exchange_rate",
+            "tipo": "REAL",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": []
+      },
+      {
+        "nome": "gold.analytics__gasto_elegivel_rewards",
+        "produto": "analytics_gasto_elegivel_rewards",
+        "camada_produto": "Analytics",
+        "camada_medalhao": "Gold",
+        "papel": "Interface exposta do produto — PENDÊNCIA: regra de elegibilidade depende do subdomínio Benefícios/Rewards, ainda não mapeado",
+        "pipeline": "pipeline_analytics_gasto_elegivel_rewards",
+        "frequencia": "Batch diário",
+        "fonte_origem": "",
+        "lineage_upstream": [
+          "gold.integration__purchase_journey"
+        ],
+        "colunas": [
+          {
+            "nome": "purchase_id",
+            "tipo": "TEXT",
+            "nullable": false,
+            "chave_primaria": true
+          },
+          {
+            "nome": "customer_id",
+            "tipo": "TEXT",
+            "nullable": false
+          },
+          {
+            "nome": "eligible_amount",
+            "tipo": "REAL",
+            "nullable": false
+          },
+          {
+            "nome": "category",
+            "tipo": "TEXT",
+            "nullable": false
+          }
+        ],
+        "lineage_downstream": []
+      }
+    ],
+    "tabelas_externas_nao_mapeadas": [
+      "silver_l2.disputes__chargeback"
+    ],
+    "relacionamentos_inferidos": [
+      {
+        "coluna": "card_id",
+        "tabelas": [
+          "bronze.purchases__credit_approved",
+          "bronze.purchases__debit_cancelled",
+          "bronze.purchases__debit_denied",
+          "bronze.purchases__credit_cancelled",
+          "bronze.purchases__credit_processed",
+          "bronze.purchases__debit_approved",
+          "bronze.purchases__credit_clearing",
+          "silver_l1.purchases__credit_purchase",
+          "silver_l2.purchases__credit_purchase",
+          "bronze.purchases__debit_clearing",
+          "bronze.purchases__debit_processed",
+          "silver_l2.purchases__debit_purchase",
+          "bronze.purchases__credit_denied",
+          "gold.integration__purchase_journey",
+          "silver_l1.purchases__debit_purchase"
+        ]
+      },
+      {
+        "coluna": "customer_id",
+        "tabelas": [
+          "bronze.purchases__credit_approved",
+          "bronze.purchases__debit_cancelled",
+          "bronze.purchases__debit_denied",
+          "gold.analytics__comportamento_gasto",
+          "bronze.purchases__credit_cancelled",
+          "gold.analytics__extrato_cliente",
+          "bronze.purchases__credit_processed",
+          "bronze.purchases__debit_approved",
+          "bronze.purchases__credit_clearing",
+          "silver_l1.purchases__credit_purchase",
+          "silver_l2.purchases__credit_purchase",
+          "bronze.purchases__debit_clearing",
+          "bronze.purchases__debit_processed",
+          "silver_l2.purchases__debit_purchase",
+          "bronze.purchases__credit_denied",
+          "gold.integration__purchase_journey",
+          "gold.analytics__gasto_elegivel_rewards",
+          "silver_l1.purchases__debit_purchase"
+        ]
+      },
+      {
+        "coluna": "event_id",
+        "tabelas": [
+          "bronze.purchases__credit_approved",
+          "bronze.purchases__debit_cancelled",
+          "bronze.purchases__debit_denied",
+          "bronze.purchases__credit_cancelled",
+          "bronze.purchases__credit_processed",
+          "bronze.purchases__debit_approved",
+          "bronze.purchases__credit_clearing",
+          "bronze.purchases__debit_clearing",
+          "bronze.purchases__debit_processed",
+          "bronze.purchases__credit_denied"
+        ]
+      },
+      {
+        "coluna": "merchant_id",
+        "tabelas": [
+          "bronze.purchases__credit_approved",
+          "bronze.purchases__debit_cancelled",
+          "bronze.purchases__debit_denied",
+          "bronze.purchases__credit_cancelled",
+          "bronze.purchases__credit_processed",
+          "bronze.purchases__debit_approved",
+          "bronze.purchases__credit_clearing",
+          "silver_l1.purchases__credit_purchase",
+          "silver_l2.purchases__credit_purchase",
+          "bronze.purchases__debit_clearing",
+          "bronze.purchases__debit_processed",
+          "silver_l2.purchases__debit_purchase",
+          "bronze.purchases__credit_denied",
+          "gold.integration__purchase_journey",
+          "silver_l1.purchases__debit_purchase"
+        ]
+      },
+      {
+        "coluna": "purchase_id",
+        "tabelas": [
+          "bronze.purchases__debit_cancelled",
+          "bronze.purchases__debit_denied",
+          "bronze.purchases__credit_processed",
+          "silver.purchases__credit_transaction",
+          "gold.integration__purchase_journey",
+          "gold.analytics__extrato_cliente",
+          "bronze.purchases__debit_approved",
+          "silver_l1.purchases__credit_purchase",
+          "gold.analytics__gasto_elegivel_rewards",
+          "silver_l1.purchases__debit_purchase",
+          "bronze.purchases__credit_transaction",
+          "bronze.purchases__credit_cancelled",
+          "silver_l2.purchases__credit_purchase",
+          "bronze.purchases__credit_denied",
+          "bronze.purchases__credit_approved",
+          "gold.analytics__latencia_liquidacao_compra",
+          "bronze.purchases__debit_clearing",
+          "bronze.purchases__debit_processed",
+          "bronze.purchases__credit_clearing",
+          "silver_l2.purchases__debit_purchase",
+          "gold.analytics__gasto_internacional"
+        ]
+      },
+      {
+        "coluna": "transaction_id",
+        "tabelas": [
+          "silver.purchases__credit_transaction",
+          "bronze.purchases__credit_transaction"
+        ]
+      },
+      {
+        "coluna": "transaction_type_id",
+        "tabelas": [
+          "silver.purchases__credit_transaction_type",
+          "bronze.purchases__credit_transaction_type",
+          "silver.purchases__credit_transaction",
+          "bronze.purchases__credit_transaction"
+        ]
+      }
+    ]
+  }
+};
+    </script>
+
+    <script>
+        // ========== RENDERIZAÇÃO ==========
+
+        // Renderizar tabela de desambiguação
+        function renderDisambiguation() {
+            const table = document.getElementById('disambiguation');
+            table.innerHTML = '';
+
+            const thead = document.createElement('thead');
+            thead.innerHTML = '<tr><th>Conceito</th><th>O que classifica?</th><th>Valores</th><th>Exemplo</th></tr>';
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            DATA.conceitos.desambiguacao_core.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${row.conceito}</strong></td>
+                    <td>${row.classifica}</td>
+                    <td>${row.valores}</td>
+                    <td>${row.exemplo}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+        }
+
+        // Renderizar grid de subdomínios
+        function renderSubdominios(filter = 'all') {
+            const container = document.getElementById('subdominios-container');
+            container.innerHTML = '';
+
+            DATA.subdominios.forEach(sub => {
+                if (filter !== 'all' && sub.tipo_ddd !== filter) return;
+
+                const card = document.createElement('div');
+                card.className = 'subdominio-card';
+
+                const tipoDDD = sub.tipo_ddd.toLowerCase();
+                const badge = document.createElement('span');
+                badge.className = `badge ${tipoDDD === 'generic' ? 'generic' : tipoDDD === 'support' ? 'support' : ''}`;
+                badge.textContent = sub.tipo_ddd;
+
+                const technicalBadge = sub.tem_mapeamento_tecnico ?
+                    '<span class="badge technical">✓ Técnico</span>' : '';
+
+                card.innerHTML = `
+                    <div class="subdominio-header">
+                        <h3>${sub.nome}</h3>
+                        <div>${badge.outerHTML}${technicalBadge}</div>
+                    </div>
+                    <div class="subdominio-body">
+                        <p><strong>Bounded Context:</strong> ${sub.bounded_context}</p>
+                        <p><strong>Origem:</strong> ${sub.sistemas_origem}</p>
+                        <ul class="produtos-list">
+                            ${sub.produtos.map(p => `<li>${p.camada}: <strong>${p.nome}</strong></li>`).join('')}
+                        </ul>
+                        ${sub.tem_mapeamento_tecnico ? `<p style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); color: var(--color-core); font-weight: 500; cursor: pointer;" onclick="goToStudyCase()">→ Ver detalhes técnicos</p>` : ''}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function goToStudyCase() {
+            document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+            document.getElementById('estudo-caso').classList.add('active');
+            document.querySelectorAll('.nav-link').forEach(a => a.classList.remove('active'));
+            document.querySelector('[data-section="estudo-caso"]').classList.add('active');
+            window.location.hash = '#estudo-caso';
+        }
+
+        // Filtrar subdomínios
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderSubdominios(btn.dataset.filter);
+            });
+        });
+
+        // Renderizar explorador de tabelas
+        function renderExplorer() {
+            const listContainer = document.getElementById('table-list');
+            listContainer.innerHTML = '';
+
+            const tabelas = DATA.compras_autorizacao.tabelas;
+            tabelas.forEach((tab, idx) => {
+                const item = document.createElement('div');
+                item.className = 'table-item';
+                item.textContent = tab.nome;
+                item.dataset.index = idx;
+                item.addEventListener('click', () => showTableDetail(idx));
+                listContainer.appendChild(item);
+            });
+
+            // Busca
+            document.getElementById('table-search').addEventListener('input', (e) => {
+                const q = e.target.value.toLowerCase();
+                document.querySelectorAll('.table-item').forEach(item => {
+                    item.style.display = item.textContent.toLowerCase().includes(q) ? 'block' : 'none';
+                });
+            });
+        }
+
+        function showTableDetail(idx) {
+            const tab = DATA.compras_autorizacao.tabelas[idx];
+            const detailDiv = document.getElementById('table-detail');
+
+            const pkCols = tab.colunas.filter(c => c.chave_primaria).map(c => c.nome).join(', ');
+            const columnsHtml = tab.colunas.map(col => `
+                <div class="column-row">
+                    <div class="column-name">${col.nome}</div>
+                    <div>
+                        <span class="column-type">${col.tipo}</span>
+                        <span class="column-badges">
+                            ${col.chave_primaria ? '<span class="column-badge">PK</span>' : ''}
+                            ${col.nullable ? '<span class="column-badge" style="background: #e0f2fe; color: #0369a1;">NULLABLE</span>' : ''}
+                        </span>
+                    </div>
+                    <div class="column-desc">${col.descricao || ''}</div>
+                </div>
+            `).join('');
+
+            detailDiv.innerHTML = `
+                <h3 style="margin-bottom: 6px;">${tab.nome}</h3>
+                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">${tab.papel}</p>
+
+                <h4>Metadados</h4>
+                <p><strong>Camada:</strong> ${tab.camada_medalhao}</p>
+                <p><strong>Produto:</strong> ${tab.produto}</p>
+                <p><strong>Camada Produto:</strong> ${tab.camada_produto}</p>
+                <p><strong>Pipeline:</strong> ${tab.pipeline}</p>
+                <p><strong>Frequência:</strong> ${tab.frequencia}</p>
+
+                ${pkCols ? `<p><strong>Chave Primária:</strong> ${pkCols}</p>` : ''}
+
+                ${tab.lineage_upstream.length > 0 ? `
+                    <h4>Upstream (fed por)</h4>
+                    <ul class="produtos-list">
+                        ${tab.lineage_upstream.map(t => `<li>${t}</li>`).join('')}
+                    </ul>
+                ` : ''}
+
+                ${tab.lineage_downstream.length > 0 ? `
+                    <h4>Downstream (alimenta)</h4>
+                    <ul class="produtos-list">
+                        ${tab.lineage_downstream.map(t => `<li>${t}</li>`).join('')}
+                    </ul>
+                ` : ''}
+
+                <h4>Colunas</h4>
+                <div class="columns-grid">${columnsHtml}</div>
+            `;
+
+            // Marcar como selecionado
+            document.querySelectorAll('.table-item').forEach((item, i) => {
+                item.classList.toggle('active', i === idx);
+            });
+        }
+
+        // Renderizar notas do piloto
+        function renderNotas() {
+            const container = document.getElementById('notas-list');
+            container.innerHTML = '';
+
+            DATA.compras_autorizacao.notas.forEach(nota => {
+                const div = document.createElement('div');
+                div.className = 'callout';
+                div.innerHTML = `<strong>${nota.titulo}</strong>${nota.texto}`;
+                container.appendChild(div);
+            });
+        }
+
+        // ========== NAVEGAÇÃO ==========
+
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const section = link.dataset.section;
+                document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+                document.getElementById(section).classList.add('active');
+                document.querySelectorAll('.nav-link').forEach(a => a.classList.remove('active'));
+                link.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.estudo-tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tab = btn.dataset.tab;
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                document.querySelector(`.tab-content[data-tab="${tab}"]`).classList.add('active');
+                document.querySelectorAll('.estudo-tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        function closeDrawer() {
+            document.getElementById('detail-drawer').classList.remove('active');
+        }
+
+        // ========== DIAGRAMA INTERATIVO ==========
+
+        function svgEl(tag, attrs = {}) {
+            const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+            Object.entries(attrs).forEach(([k, v]) => {
+                if (k === 'class') {
+                    el.setAttribute('class', v);
+                } else {
+                    el.setAttribute(k, v);
+                }
+            });
+            return el;
+        }
+
+        function buildDiagramLayout(tabelas, externas) {
+            const laneKeys = ['bronze', 'silver_l1', 'silver', 'silver_l2', 'gold_integration', 'gold_analytics'];
+            const laneMap = {
+                'bronze': 'Bronze',
+                'silver_l1': 'Silver L1',
+                'silver': 'Silver',
+                'silver_l2': 'Silver L2',
+                'gold_integration': 'Gold (Integration)',
+                'gold_analytics': 'Gold (Analytics)'
+            };
+            const lanePositions = { bronze: 0, silver_l1: 280, silver: 560, silver_l2: 840, gold_integration: 1120, gold_analytics: 1400 };
+
+            const nodes = new Map();
+            const laneNodes = { bronze: [], silver_l1: [], silver: [], silver_l2: [], gold_integration: [], gold_analytics: [] };
+
+            tabelas.forEach((t, idx) => {
+                let laneKey;
+                if (t.camada_medalhao === 'Bronze') laneKey = 'bronze';
+                else if (t.camada_medalhao === 'Silver L1') laneKey = 'silver_l1';
+                else if (t.camada_medalhao === 'Silver') laneKey = 'silver';
+                else if (t.camada_medalhao === 'Silver L2') laneKey = 'silver_l2';
+                else if (t.camada_medalhao === 'Gold') {
+                    laneKey = t.camada_produto === 'Integration' ? 'gold_integration' : 'gold_analytics';
+                }
+
+                const nodeName = t.nome;
+                const displayName = t.nome.split('__')[1]?.substring(0, 20) || t.nome.substring(0, 20);
+                const collapsedHeight = 56;
+                const expandedHeight = 56 + Math.min(t.colunas.length, 8) * 28 + 8;
+
+                const node = {
+                    nome: nodeName,
+                    displayName,
+                    camadaMedalhao: t.camada_medalhao,
+                    camadaProduto: t.camada_produto || '',
+                    isGhost: false,
+                    colunas: t.colunas || [],
+                    laneKey,
+                    x: lanePositions[laneKey],
+                    y: 0,
+                    width: 240,
+                    collapsedHeight,
+                    expandedHeight,
+                    expanded: false
+                };
+
+                nodes.set(nodeName, node);
+                laneNodes[laneKey].push(node);
+            });
+
+            externas.forEach(nomExterna => {
+                let laneKey = 'silver_l2';
+                if (nomExterna.startsWith('bronze.')) laneKey = 'bronze';
+                else if (nomExterna.startsWith('silver_l1.')) laneKey = 'silver_l1';
+                else if (nomExterna.startsWith('silver.')) laneKey = 'silver';
+                else if (nomExterna.startsWith('gold.')) {
+                    laneKey = 'gold_integration';
+                }
+
+                const node = {
+                    nome: nomExterna,
+                    displayName: nomExterna.split('__')[1]?.substring(0, 20) || nomExterna.substring(0, 20),
+                    camadaMedalhao: laneKey.toUpperCase().replace('_', ' '),
+                    camadaProduto: 'External',
+                    isGhost: true,
+                    colunas: [],
+                    laneKey,
+                    x: lanePositions[laneKey],
+                    y: 0,
+                    width: 240,
+                    collapsedHeight: 56,
+                    expandedHeight: 56,
+                    expanded: false
+                };
+
+                nodes.set(nomExterna, node);
+                laneNodes[laneKey].push(node);
+            });
+
+            computeLaneYs(nodes, laneNodes);
+
+            const edges = [];
+            const upstreamMap = new Map();
+            const downstreamMap = new Map();
+
+            tabelas.forEach(t => {
+                if (!upstreamMap.has(t.nome)) upstreamMap.set(t.nome, []);
+                if (!downstreamMap.has(t.nome)) downstreamMap.set(t.nome, []);
+
+                (t.lineage_upstream || []).forEach(up => {
+                    edges.push({ from: up, to: t.nome });
+                    if (!downstreamMap.has(up)) downstreamMap.set(up, []);
+                    downstreamMap.get(up).push(t.nome);
+                    upstreamMap.get(t.nome).push(up);
+                });
+            });
+
+            externas.forEach(ex => {
+                if (!upstreamMap.has(ex)) upstreamMap.set(ex, []);
+                if (!downstreamMap.has(ex)) downstreamMap.set(ex, []);
+            });
+
+            return { nodes, laneNodes, edges, upstreamMap, downstreamMap, lanePositions, laneMap };
+        }
+
+        function computeLaneYs(nodes, laneNodes) {
+            Object.values(laneNodes).forEach(laneNodeList => {
+                let runningY = 20;
+                laneNodeList.forEach(node => {
+                    node.y = runningY;
+                    const h = node.expanded ? node.expandedHeight : node.collapsedHeight;
+                    runningY += h + 16;
+                });
+            });
+        }
+
+        function renderDiagram(container, layout) {
+            const viewport = document.getElementById('diagram-viewport');
+            const world = document.getElementById('diagram-world');
+            const edgesSvg = document.getElementById('diagram-edges-svg');
+
+            if (!world || !edgesSvg) {
+                console.error('Diagram elements not found', {world, edgesSvg});
+                return;
+            }
+
+            while (world.firstChild) {
+                world.removeChild(world.firstChild);
+            }
+            while (edgesSvg.firstChild) {
+                edgesSvg.removeChild(edgesSvg.firstChild);
+            }
+
+            const allNodes = Array.from(layout.nodes.values());
+            if (allNodes.length === 0) return;
+
+            const maxY = Math.max(...allNodes.map(n => n.y + (n.expanded ? n.expandedHeight : n.collapsedHeight))) + 40;
+            const maxX = 1680;
+
+            world.style.width = maxX + 'px';
+            world.style.height = maxY + 'px';
+            edgesSvg.setAttribute('width', maxX);
+            edgesSvg.setAttribute('height', maxY);
+            edgesSvg.setAttribute('viewBox', `0 0 ${maxX} ${maxY}`);
+
+            renderEdges(layout, edgesSvg);
+            renderNodes(layout, world);
+            renderLaneLabels(layout, world);
+            initInteractions(layout);
+        }
+
+        function renderNodes(layout, world) {
+            if (!world) world = document.getElementById('diagram-world');
+            if (!world) return;
+
+            layout.nodes.forEach(node => {
+                const nodeEl = document.createElement('div');
+                nodeEl.className = 'diagram-node';
+                if (node.isGhost) nodeEl.classList.add('diagram-node--ghost');
+                if (node.expanded) nodeEl.classList.add('diagram-node--expanded');
+
+                const colorVar = {
+                    'Bronze': '--color-bronze',
+                    'Silver L1': '--color-silver-l1',
+                    'Silver': '--color-silver',
+                    'Silver L2': '--color-silver-l2',
+                    'Gold': '--color-gold'
+                }[node.camadaMedalhao];
+
+                if (colorVar) {
+                    const colorVal = getComputedStyle(document.documentElement).getPropertyValue(colorVar).trim();
+                    nodeEl.style.borderColor = colorVal;
+                }
+
+                nodeEl.style.left = node.x + 'px';
+                nodeEl.style.top = node.y + 'px';
+                nodeEl.style.height = (node.expanded ? node.expandedHeight : node.collapsedHeight) + 'px';
+
+                const header = document.createElement('div');
+                header.className = 'diagram-node-header';
+                header.dataset.tableName = node.nome;
+
+                const name = document.createElement('div');
+                name.className = 'diagram-node-name';
+                name.textContent = node.displayName;
+
+                const badge = document.createElement('span');
+                badge.className = 'diagram-node-badge badge';
+                badge.textContent = node.camadaMedalhao.split(' ')[0];
+                if (node.camadaProduto === 'Integration') {
+                    badge.style.background = 'var(--color-integration)';
+                    badge.style.color = '#fff';
+                } else if (node.camadaProduto === 'Analytics') {
+                    badge.style.background = 'var(--color-analytics)';
+                    badge.style.color = '#fff';
+                } else {
+                    badge.style.background = '#e0e7ff';
+                }
+
+                const colcount = document.createElement('span');
+                colcount.className = 'diagram-node-colcount';
+                colcount.textContent = `${node.colunas.length} col`;
+
+                const caret = document.createElement('div');
+                caret.className = 'diagram-node-caret';
+                caret.textContent = node.isGhost ? '' : '▸';
+
+                header.appendChild(name);
+                header.appendChild(badge);
+                header.appendChild(colcount);
+                if (!node.isGhost) header.appendChild(caret);
+
+                nodeEl.appendChild(header);
+
+                if (!node.isGhost && node.colunas.length > 0) {
+                    const cols = document.createElement('div');
+                    cols.className = 'diagram-node-columns';
+
+                    node.colunas.forEach(col => {
+                        const colEl = document.createElement('div');
+                        colEl.className = 'diagram-node-column';
+                        colEl.dataset.columnName = col.nome;
+
+                        let content = `<span class="column-name">${col.nome}</span>`;
+                        content += ` <span class="column-type">${col.tipo}</span>`;
+                        if (col.chave_primaria) content += ` <span class="column-badge">PK</span>`;
+                        if (col.nullable) content += ` <span class="column-badge">NULL</span>`;
+
+                        colEl.innerHTML = content;
+                        cols.appendChild(colEl);
+                    });
+
+                    nodeEl.appendChild(cols);
+                }
+
+                world.appendChild(nodeEl);
+            });
+        }
+
+        function renderEdges(layout, edgesSvg) {
+            if (!edgesSvg) edgesSvg = document.getElementById('diagram-edges-svg');
+            if (!edgesSvg) return;
+
+            while (edgesSvg.firstChild) {
+                edgesSvg.removeChild(edgesSvg.firstChild);
+            }
+
+            layout.edges.forEach(edge => {
+                const fromNode = layout.nodes.get(edge.from);
+                const toNode = layout.nodes.get(edge.to);
+                if (!fromNode || !toNode) return;
+
+                const x1 = fromNode.x + fromNode.width;
+                const y1 = fromNode.y + (fromNode.expanded ? fromNode.expandedHeight : fromNode.collapsedHeight) / 2;
+                const x2 = toNode.x;
+                const y2 = toNode.y + (toNode.expanded ? toNode.expandedHeight : toNode.collapsedHeight) / 2;
+
+                const midX = (x1 + x2) / 2;
+                const d = `M ${x1} ${y1} C ${midX} ${y1} ${midX} ${y2} ${x2} ${y2}`;
+
+                const path = svgEl('path', {
+                    d,
+                    class: 'edge',
+                    'marker-end': 'url(#arrowhead)'
+                });
+
+                edgesSvg.appendChild(path);
+            });
+
+            if (edgesSvg.querySelector('defs') === null) {
+                const defs = svgEl('defs');
+                const marker = svgEl('marker', {
+                    id: 'arrowhead',
+                    markerWidth: '10',
+                    markerHeight: '10',
+                    refX: '9',
+                    refY: '3',
+                    orient: 'auto'
+                });
+                const poly = svgEl('polygon', {
+                    points: '0 0, 10 3, 0 6',
+                    fill: '#d1d5db'
+                });
+                marker.appendChild(poly);
+                defs.appendChild(marker);
+                edgesSvg.appendChild(defs);
+            }
+        }
+
+        function renderLaneLabels(layout, world) {
+            if (!world) world = document.getElementById('diagram-world');
+            if (!world) return;
+
+            Object.entries(layout.lanePositions).forEach(([key, x]) => {
+                const label = document.createElement('span');
+                label.className = 'diagram-lane-label';
+                label.textContent = layout.laneMap[key];
+                label.style.left = (x + 10) + 'px';
+                label.style.top = '0px';
+                world.appendChild(label);
+            });
+        }
+
+        function initInteractions(layout) {
+            const viewport = document.getElementById('diagram-viewport');
+            const world = document.getElementById('diagram-world');
+            const searchInput = document.getElementById('diagram-search');
+            const filtersContainer = document.getElementById('diagram-filters');
+            const zoomIn = document.getElementById('diagram-zoom-in');
+            const zoomOut = document.getElementById('diagram-zoom-out');
+            const zoomReset = document.getElementById('diagram-zoom-reset');
+
+            let panX = 0, panY = 0, zoom = 1;
+
+            const applyTransform = () => {
+                world.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+            };
+
+            const fitToView = () => {
+                zoom = 1;
+                panX = 0;
+                panY = 0;
+                applyTransform();
+            };
+
+            const edgesSvg = document.getElementById('diagram-edges-svg');
+
+            const updateNodePositions = () => {
+                document.querySelectorAll('.diagram-node').forEach(el => {
+                    const tableName = el.querySelector('.diagram-node-header').dataset.tableName;
+                    const node = layout.nodes.get(tableName);
+                    if (node) {
+                        el.style.top = node.y + 'px';
+                        el.style.height = (node.expanded ? node.expandedHeight : node.collapsedHeight) + 'px';
+                        if (node.expanded) {
+                            el.classList.add('diagram-node--expanded');
+                        } else {
+                            el.classList.remove('diagram-node--expanded');
+                        }
+                    }
+                });
+                if (edgesSvg) renderEdges(layout, edgesSvg);
+            };
+
+            document.querySelectorAll('.diagram-node-header').forEach(header => {
+                header.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const tableName = header.dataset.tableName;
+                    const node = layout.nodes.get(tableName);
+                    node.expanded = !node.expanded;
+                    computeLaneYs(layout.nodes, layout.laneNodes);
+                    updateNodePositions();
+                });
+            });
+
+            document.querySelectorAll('.diagram-node-column').forEach(col => {
+                col.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const tableName = col.closest('.diagram-node').querySelector('.diagram-node-header').dataset.tableName;
+                    const columnName = col.dataset.columnName;
+                    const rels = DATA.compras_autorizacao.relacionamentos_inferidos.find(r => r.coluna === columnName);
+                    if (rels) {
+                        clearHighlights();
+                        const hubSpokes = new Set([tableName, ...rels.tabelas.filter(t => t !== tableName)]);
+                        hubSpokes.forEach(t => {
+                            const el = document.querySelector(`.diagram-node-header[data-table-name="${t}"]`)?.closest('.diagram-node');
+                            if (el) el.classList.add('diagram-node--column-highlight');
+                        });
+                        document.querySelectorAll('.diagram-node').forEach(el => {
+                            if (!hubSpokes.has(el.querySelector('.diagram-node-header').dataset.tableName)) {
+                                el.classList.add('diagram-node--dim');
+                            }
+                        });
+                    }
+                });
+            });
+
+            const clearHighlights = () => {
+                document.querySelectorAll('.diagram-node').forEach(el => {
+                    el.classList.remove('diagram-node--highlight', 'diagram-node--column-highlight', 'diagram-node--dim');
+                });
+            };
+
+            viewport.addEventListener('mousedown', e => {
+                if (e.target.closest('.diagram-node')) return;
+                let startX = e.clientX, startY = e.clientY;
+                const startPanX = panX, startPanY = panY;
+                viewport.classList.add('panning');
+
+                const handleMouseMove = e => {
+                    panX = startPanX + (e.clientX - startX);
+                    panY = startPanY + (e.clientY - startY);
+                    applyTransform();
+                };
+
+                const handleMouseUp = () => {
+                    viewport.classList.remove('panning');
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                };
+
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+            });
+
+            viewport.addEventListener('wheel', e => {
+                e.preventDefault();
+                const rect = viewport.getBoundingClientRect();
+                const mx = e.clientX - rect.left;
+                const my = e.clientY - rect.top;
+                const zoomOld = zoom;
+                zoom *= 1 - e.deltaY * 0.001;
+                zoom = Math.max(0.3, Math.min(2, zoom));
+
+                const worldX = (mx - panX) / zoomOld;
+                const worldY = (my - panY) / zoomOld;
+                panX = mx - worldX * zoom;
+                panY = my - worldY * zoom;
+
+                applyTransform();
+            });
+
+            zoomIn.addEventListener('click', () => {
+                const rect = viewport.getBoundingClientRect();
+                const mx = rect.width / 2, my = rect.height / 2;
+                const zoomOld = zoom;
+                zoom *= 1.2;
+                zoom = Math.max(0.3, Math.min(2, zoom));
+
+                const worldX = (mx - panX) / zoomOld;
+                const worldY = (my - panY) / zoomOld;
+                panX = mx - worldX * zoom;
+                panY = my - worldY * zoom;
+
+                applyTransform();
+            });
+
+            zoomOut.addEventListener('click', () => {
+                const rect = viewport.getBoundingClientRect();
+                const mx = rect.width / 2, my = rect.height / 2;
+                const zoomOld = zoom;
+                zoom *= 0.8;
+                zoom = Math.max(0.3, Math.min(2, zoom));
+
+                const worldX = (mx - panX) / zoomOld;
+                const worldY = (my - panY) / zoomOld;
+                panX = mx - worldX * zoom;
+                panY = my - worldY * zoom;
+
+                applyTransform();
+            });
+
+            zoomReset.addEventListener('click', fitToView);
+
+            const modos = ['bronze', 'silver_l1', 'silver', 'silver_l2', 'gold'];
+            modos.forEach(modo => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn active';
+                btn.dataset.layer = modo;
+                btn.textContent = modo.replace('_', ' ').toUpperCase();
+                btn.addEventListener('click', () => {
+                    btn.classList.toggle('active');
+                    clearHighlights();
+                    const activeModos = Array.from(document.querySelectorAll('.filter-btn.active')).map(b => b.dataset.layer);
+                    document.querySelectorAll('.diagram-node').forEach(el => {
+                        const node = layout.nodes.get(el.querySelector('.diagram-node-header').dataset.tableName);
+                        const nodeLayer = node.camadaMedalhao.toLowerCase().replace(' ', '_');
+                        if (!activeModos.some(m => nodeLayer.includes(m))) {
+                            el.classList.add('diagram-node--dim');
+                        }
+                    });
+                });
+                filtersContainer.appendChild(btn);
+            });
+
+            let searchTimeout;
+            searchInput.addEventListener('input', e => {
+                clearTimeout(searchTimeout);
+                const query = e.target.value.toLowerCase();
+                if (!query) {
+                    clearHighlights();
+                    return;
+                }
+                searchTimeout = setTimeout(() => {
+                    clearHighlights();
+                    const matches = [];
+                    layout.nodes.forEach((node, name) => {
+                        if (name.toLowerCase().includes(query)) {
+                            matches.push(node);
+                            document.querySelector(`.diagram-node-header[data-table-name="${name}"]`)?.closest('.diagram-node')?.classList.add('diagram-node--highlight');
+                        } else {
+                            document.querySelector(`.diagram-node-header[data-table-name="${name}"]`)?.closest('.diagram-node')?.classList.add('diagram-node--dim');
+                        }
+                    });
+                }, 300);
+            });
+        }
+
+        function initDiagramTab() {
+            const tabelas = DATA.compras_autorizacao.tabelas;
+            const externas = DATA.compras_autorizacao.tabelas_externas_nao_mapeadas || [];
+            const layout = buildDiagramLayout(tabelas, externas);
+            renderDiagram(document.getElementById('diagram-viewport'), layout);
+        }
+
+        // ========== INICIALIZAÇÃO ==========
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderDisambiguation();
+            renderSubdominios();
+            renderExplorer();
+            renderNotas();
+            initDiagramTab();
+        });
+    </script>
+</body>
+</html>

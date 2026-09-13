@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=../_schema/catalogo.schema.json
+subdominio:
+  nome: Conta Cartão
+  bounded_context: Representa o relacionamento contratual entre cliente e produto
+    cartão
+  sistemas_origem: Core banking de contas
+  tipo_ddd: Core
+produtos:
+- camada: Core
+  nome: core_card_account
+  descricao: Estado da conta cartão (ativa, bloqueada, encerrada) e seus atributos
+    contratuais
+  consumidores:
+  - Praticamente todos os demais subdomínios
+  - Time de Performance
+  dono: Time de Conta/Core Banking
+  status: V0 — a validar
+- camada: Integration
+  nome: integration_customer_account_view
+  descricao: Cruza a conta cartão com dados cadastrais do cliente (CRM) e outros produtos
+    bancários
+  consumidores:
+  - Atendimento
+  - visão 360
+  - Time de Performance
+  dono: Time de Conta/Core Banking
+  status: V0 — a validar
+- camada: Analytics
+  nome: analytics_account_health
+  descricao: 'Indicadores de saúde da conta: atividade, atraso, engajamento'
+  consumidores:
+  - Risco
+  - retenção
+  - Time de Performance
+  dono: Time de Conta/Core Banking
+  status: V0 — a validar
