@@ -23,12 +23,15 @@ arraste para o navegador). Funciona 100% offline via `file://`.
 
 ### Conteúdo
 
-Três abas:
+Página única (rolagem contínua, sem abas), com navegação por âncora entre
+três seções:
 
 - **Forma de Modelar** — os três eixos de classificação (DDD, Camada
   Medalhão, Core/Integration/Analytics), a desambiguação "Core tem 3
   significados", e o grid dos 15 subdomínios do domínio Cartão (com filtro
-  Core/Support/Generic) — dados lidos de `catalog/index.yaml`.
+  Core/Integration/Analytics — quais camadas de produto já têm produto
+  proposto no catálogo) — dados lidos de `catalog/index.yaml` e de cada
+  `catalog/<slug>/catalog.yaml`.
 - **Benefícios** — por que modelar dessa forma (Silver L1 vs L2, Integration,
   Analytics em português, alinhamento com bounded contexts, escalabilidade).
 - **Estudo de Caso** — narrativa do piloto Compras/Autorização (pipeline
@@ -37,26 +40,30 @@ Três abas:
 
 ### Como Regenerar
 
-Se `catalog/index.yaml` for editado, regenere com:
+Se `catalog/index.yaml` ou algum `catalog/<slug>/catalog.yaml` for editado,
+regenere com:
 
 ```bash
 python3 scripts/build_apresentacao_executiva.py
 ```
 
-O script lê `catalog/index.yaml` e injeta o grid de subdomínios em
-`apresentacao-executiva.template.html`, escrevendo `apresentacao-executiva.html`.
-O restante do conteúdo (conceitos, benefícios, narrativa do estudo de caso) é
-texto estático no template — editar o `.template.html` diretamente e
-regerar.
+O script lê `catalog/index.yaml` (dados dos subdomínios) e, para cada um,
+`catalog/<slug>/catalog.yaml` (camadas Core/Integration/Analytics já
+propostas), injetando o grid em `apresentacao-executiva.template.html` e
+escrevendo `apresentacao-executiva.html`. O restante do conteúdo (conceitos,
+benefícios, narrativa do estudo de caso) é texto estático no template —
+editar o `.template.html` diretamente e regerar.
 
 ### Verificação
 
 1. Abra `presentation/apresentacao-executiva.html` no navegador.
-2. Navegue pelas 3 abas, teste o filtro Core/Support/Generic no grid de
-   subdomínios.
-3. Clique em "Abrir mapa interativo" e confirme que `parque-de-dados.html`
+2. Clique nos links de navegação (Forma de Modelar / Benefícios / Estudo de
+   Caso) e confirme que a página rola até a seção correspondente, com o link
+   ativo destacado.
+3. Teste o filtro Core/Integration/Analytics no grid de subdomínios.
+4. Clique em "Abrir mapa interativo" e confirme que `parque-de-dados.html`
    abre em nova aba.
-4. Console do navegador (`F12`) sem erros de JS.
+5. Console do navegador (`F12`) sem erros de JS.
 
 ---
 

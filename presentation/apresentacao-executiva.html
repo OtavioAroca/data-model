@@ -11,13 +11,7 @@
     --layer-bronze: #b45309;
     --layer-silver-l1: #64748b;
     --layer-silver-l2: #475569;
-    --layer-silver: #94a3b8;
     --layer-gold: #ca8a04;
-    --edge-lineage: #2563eb;
-    --edge-relacional: #9333ea;
-    --ddd-core: #b45309;
-    --ddd-support: #2563eb;
-    --ddd-generic: #6b7280;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -36,6 +30,7 @@
     --border: #2c313a;
   }
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   html, body { margin: 0; }
   body {
     background: var(--bg);
@@ -43,7 +38,7 @@
     font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
   header {
-    padding: 22px 24px 18px;
+    padding: 22px 24px 14px;
     border-bottom: 1px solid var(--border);
     background: var(--panel-bg);
     position: sticky;
@@ -53,8 +48,8 @@
   header h1 { font-size: 20px; margin: 0 0 4px; }
   header p { margin: 0 0 16px; color: var(--text-muted); font-size: 13px; }
 
-  nav.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
-  nav.tabs button {
+  nav.section-nav { display: flex; gap: 6px; flex-wrap: wrap; }
+  nav.section-nav a {
     border: 1px solid var(--border);
     background: var(--bg);
     color: var(--text);
@@ -62,13 +57,17 @@
     padding: 8px 14px;
     font-size: 13px;
     font-weight: 600;
-    cursor: pointer;
+    text-decoration: none;
   }
-  nav.tabs button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  nav.section-nav a.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-  main { max-width: 980px; margin: 0 auto; padding: 28px 24px 60px; }
-  section.tab-panel { display: none; }
-  section.tab-panel.active { display: block; }
+  main { max-width: 980px; margin: 0 auto; padding: 8px 24px 60px; }
+  section.page-section {
+    scroll-margin-top: 128px;
+    padding: 32px 0;
+    border-top: 1px solid var(--border);
+  }
+  section.page-section:first-of-type { border-top: none; }
 
   h2 { font-size: 18px; margin: 0 0 6px; }
   h2 .kicker { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
@@ -120,15 +119,11 @@
     transition: opacity 0.15s;
   }
   .sub-card.dimmed { opacity: 0.3; }
-  .sub-card h4 { margin: 0 0 4px; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+  .sub-card h4 { margin: 0 0 6px; font-size: 13px; }
+  .sub-card .camada-tags { margin-bottom: 6px; }
+  .sub-card .camada-tags .camada-tag { margin-right: 4px; }
   .sub-card p { margin: 0 0 4px; color: var(--text-muted); font-size: 12px; }
   .sub-card .origem { font-size: 11px; color: var(--text-muted); }
-  .ddd-tag { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; color: #fff; text-transform: uppercase; }
-  .ddd-tag.core { background: var(--ddd-core); }
-  .ddd-tag.support { background: var(--ddd-support); }
-  .ddd-tag.generic { background: var(--ddd-generic); }
-
-  .benefit-card .icon { font-size: 20px; margin-bottom: 4px; display: block; }
 
   .pipeline-flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0 22px; font-family: ui-monospace, monospace; font-size: 12px; }
   .pipeline-flow .stage { border: 1px solid var(--border); background: var(--panel-bg); border-radius: 6px; padding: 6px 10px; }
@@ -168,19 +163,19 @@
 </style>
 
 <header>
-  <h1>📊 Modelagem de Dados — Domínio Cartão</h1>
+  <h1>Modelagem de Dados — Domínio Cartão</h1>
   <p>Como pensamos em modelar, por que modelamos assim, e um exemplo de caso de uso (Compras/Autorização).</p>
-  <nav class="tabs">
-    <button data-tab="modelagem" class="active">Forma de Modelar</button>
-    <button data-tab="beneficios">Benefícios</button>
-    <button data-tab="estudo-caso">Estudo de Caso</button>
+  <nav class="section-nav">
+    <a href="#modelagem">Forma de Modelar</a>
+    <a href="#beneficios">Benefícios</a>
+    <a href="#estudo-caso">Estudo de Caso</a>
   </nav>
 </header>
 
 <main>
 
   <!-- ===================== FORMA DE MODELAR ===================== -->
-  <section class="tab-panel active" id="tab-modelagem">
+  <section class="page-section" id="modelagem">
     <h2><span class="kicker">Forma de Modelar</span>Três eixos de classificação, independentes entre si</h2>
     <p class="lede">Cada produto de dados do domínio Cartão é classificado ao mesmo tempo por três lentes diferentes — a que negócio ele pertence, em que estágio de processamento está, e para quem foi moldado. Nenhuma das três decide as outras duas.</p>
 
@@ -200,7 +195,7 @@
     </div>
 
     <div class="callout">
-      <strong>⚠️ Atenção: "Core" significa três coisas diferentes aqui</strong>
+      <strong>Atenção: "Core" significa três coisas diferentes aqui</strong>
       A mesma palavra aparece nos três eixos, com significados distintos — evita confusão saber qual está em jogo:
     </div>
     <table class="disambig">
@@ -225,49 +220,43 @@
     </table>
 
     <h2 style="margin-top:8px;">Os 15 Subdomínios do Domínio Cartão</h2>
-    <p class="lede">Cada card é um bounded context: o que ele resolve, quem alimenta, e sua classificação DDD.</p>
-    <div class="filter-bar" id="ddd-filters">
+    <p class="lede">Cada card é um bounded context: o que ele resolve, quem alimenta, e quais camadas de produto de dados (Core/Integration/Analytics) já têm produto proposto no catálogo.</p>
+    <div class="filter-bar" id="camada-filters">
       <button class="filter-btn active" data-filter="all">Todos</button>
       <button class="filter-btn" data-filter="Core">Core</button>
-      <button class="filter-btn" data-filter="Support">Support</button>
-      <button class="filter-btn" data-filter="Generic">Generic</button>
+      <button class="filter-btn" data-filter="Integration">Integration</button>
+      <button class="filter-btn" data-filter="Analytics">Analytics</button>
     </div>
     <div class="sub-grid" id="sub-grid"></div>
   </section>
 
   <!-- ===================== BENEFÍCIOS ===================== -->
-  <section class="tab-panel" id="tab-beneficios">
+  <section class="page-section" id="beneficios">
     <h2><span class="kicker">Benefícios</span>Por que modelar dessa forma</h2>
     <p class="lede">Cada decisão de modelagem existe para resolver um problema concreto de custo, velocidade ou alinhamento com o negócio — não é estrutura pela estrutura.</p>
 
     <div class="grid-2">
       <div class="card benefit-card">
-        <span class="icon">🎯</span>
         <h3>Alinhamento com o negócio</h3>
         <p>Cada bounded context tem dono, linguagem própria e fronteira de responsabilidade claras — a estrutura técnica espelha a estrutura organizacional, em vez de competir com ela.</p>
       </div>
       <div class="card benefit-card">
-        <span class="icon">💾</span>
         <h3>Silver L1 e L2 não são redundância</h3>
         <p>Manter histórico completo (L1) separado do estado atual materializado (L2) evita recalcular a regra de precedência de negócio a cada leitura. Auditoria lê L1; operação lê L2 — cada público paga só pelo custo que precisa.</p>
       </div>
       <div class="card benefit-card">
-        <span class="icon">🔗</span>
         <h3>Integration evita integrações N×M</h3>
         <p>Sem um produto Integration que padroniza schema entre bounded contexts, cada consumidor teria que cruzar os mesmos contextos de forma independente — N consumidores × M fontes. Um produto Integration resolve isso uma vez.</p>
       </div>
       <div class="card benefit-card">
-        <span class="icon">🌍</span>
         <h3>Analytics em português, Core/Integration em inglês</h3>
         <p>Quem consome Analytics é risco, marketing, financeiro — não engenharia. Nomear em português remove uma tradução mental a cada consulta, sem abrir mão de convenção técnica onde o público é técnico.</p>
       </div>
       <div class="card benefit-card">
-        <span class="icon">🔍</span>
         <h3>Catálogo reduz descoberta ad-hoc</h3>
         <p>Produto de dados = dono, contrato e consumidores documentados no catálogo — não uma tabela órfã que alguém precisa perguntar no chat quem mantém.</p>
       </div>
       <div class="card benefit-card">
-        <span class="icon">📈</span>
         <h3>Escala subdomínio por subdomínio</h3>
         <p>Cada bounded context tem sua própria pasta de catálogo. Um novo time de domínio se integra adicionando a sua, sem reescrever o que já existe para os outros 14.</p>
       </div>
@@ -275,7 +264,7 @@
   </section>
 
   <!-- ===================== ESTUDO DE CASO ===================== -->
-  <section class="tab-panel" id="tab-estudo-caso">
+  <section class="page-section" id="estudo-caso">
     <h2><span class="kicker">Estudo de Caso</span>Compras / Autorização</h2>
     <p class="lede">Subdomínio Core escolhido como piloto por ser o mais crítico do fluxo de cartão: autoriza e captura toda transação, incluindo o parcelamento decidido no ato da compra.</p>
 
@@ -325,7 +314,12 @@ const DATA = {
       "bounded_context": "Avalia se um cliente pode receber uma oferta de cartão, e sob quais condições",
       "sistemas_origem": "Motor de elegibilidade / bureaus de crédito",
       "tipo_ddd": "Core",
-      "tem_mapeamento_tecnico": false
+      "tem_mapeamento_tecnico": false,
+      "camadas_produto": [
+        "Core",
+        "Integration",
+        "Analytics"
+      ]
     },
     {
       "nome": "Onboarding",
@@ -333,7 +327,12 @@ const DATA = {
       "bounded_context": "Conduz a proposta, validação de identidade (KYC) e abertura da conta cartão",
       "sistemas_origem": "Sistema de proposta, KYC/antifraude cadastral",
       "tipo_ddd": "Core",
-      "tem_mapeamento_tecnico": false
+      "tem_mapeamento_tecnico": false,
+      "camadas_produto": [
+        "Core",
+        "Integration",
+        "Analytics"
+      ]
     },
     {
       "nome": "Conta Cartão",
@@ -341,7 +340,12 @@ const DATA = {
       "bounded_context": "Representa o relacionamento contratual entre cliente e produto cartão",
       "sistemas_origem": "Core banking de contas",
       "tipo_ddd": "Core",
-      "tem_mapeamento_tecnico": false
+      "tem_mapeamento_tecnico": false,
+      "camadas_produto": [
+        "Core",
+        "Integration",
+        "Analytics"
+      ]
     },
     {
       "nome": "Cartão",
@@ -349,7 +353,11 @@ const DATA = {
       "bounded_context": "Gerencia o ciclo de vida do plástico/virtual: emissão, ativação, bloqueio, reemissão",
       "sistemas_origem": "Sistema de emissão de cartões",
       "tipo_ddd": "Core",
-      "tem_mapeamento_tecnico": false
+      "tem_mapeamento_tecnico": false,
+      "camadas_produto": [
+        "Core",
+        "Analytics"
+      ]
     },
     {
       "nome": "Limite",
@@ -357,7 +365,12 @@ const DATA = {
       "bounded_context": "Concede, ajusta e controla o limite de crédito disponível na conta cartão",
       "sistemas_origem": "Motor de crédito/limite",
       "tipo_ddd": "Core",
-      "tem_mapeamento_tecnico": false
+      "tem_mapeamento_tecnico": false,
+      "camadas_produto": [
+        "Core",
+        "Integration",
+        "Analytics"
+      ]
     },
     {
       "nome": "Compras / Autorização",
@@ -365,7 +378,12 @@ const DATA = {
       "bounded_context": "Autoriza e captura as transações realizadas com o cartão, incluindo o plano de parcelamento decidido no ato da compra",
       "sistemas_origem": "Switch de autorização, rede/bandeira",
       "tipo_ddd": "Core",
-      "tem_mapeamento_tecnico": true
+      "tem_mapeamento_tecnico": true,
+      "camadas_produto": [
+        "Core",
+        "Integration",
+        "Analytics"
+      ]
     },
     {
       "nome": "Fatura",
@@ -373,7 +391,12 @@ const DATA = {
       "bounded_context": "Gera e fecha a fatura periódica com as transações e encargos do ciclo",
       "sistemas_origem": "Billing engine",
       "tipo_ddd": "Core",
-      "tem_mapeamento_tecnico": false
+      "tem_mapeamento_tecnico": false,
+      "camadas_produto": [
+        "Core",
+        "Integration",
+        "Analytics"
+      ]
     },
     {
       "nome": "Pagamento da Fatura",
@@ -381,7 +404,12 @@ const DATA = {
       "bounded_context": "Registra e concilia os pagamentos feitos pelo cliente contra a fatura, e estrutura o saldo devedor em parcelas (rotativo) quando o pagamento é parcial",
       "sistemas_origem": "Sistema de pagamentos/liquidação",
       "tipo_ddd": "Support",
-      "tem_mapeamento_tecnico": false
+      "tem_mapeamento_tecnico": false,
+      "camadas_produto": [
+        "Core",
+        "Integration",
+        "Analytics"
+      ]
     },
     {
       "nome": "Disputas / Chargeback",
@@ -389,7 +417,12 @@ const DATA = {
       "bounded_context": "Processa contestações de transações e o fluxo de chargeback com a bandeira",
       "sistemas_origem": "Sistema de disputas",
       "tipo_ddd": "Support",
-      "tem_mapeamento_tecnico": false
+      "tem_mapeamento_tecnico": false,
+      "camadas_produto": [
+        "Core",
+        "Integration",
+        "Analytics"
+      ]
     },
     {
       "nome": "Fraude",
@@ -397,7 +430,11 @@ const DATA = {
       "bounded_context": "Avalia risco de fraude em tempo real e retroativamente",
       "sistemas_origem": "Motor antifraude",
       "tipo_ddd": "Core",
-      "tem_mapeamento_tecnico": false
+      "tem_mapeamento_tecnico": false,
+      "camadas_produto": [
+        "Core",
+        "Analytics"
+      ]
     },
     {
       "nome": "Cobrança",
@@ -405,7 +442,12 @@ const DATA = {
       "bounded_context": "Trata contas em atraso, régua de contato e negociação",
       "sistemas_origem": "Sistema de cobrança/régua",
       "tipo_ddd": "Support",
-      "tem_mapeamento_tecnico": false
+      "tem_mapeamento_tecnico": false,
+      "camadas_produto": [
+        "Core",
+        "Integration",
+        "Analytics"
+      ]
     },
     {
       "nome": "Benefícios / Rewards",
@@ -413,7 +455,11 @@ const DATA = {
       "bounded_context": "Administra pontos, cashback e resgates associados ao uso do cartão",
       "sistemas_origem": "Plataforma de rewards",
       "tipo_ddd": "Generic",
-      "tem_mapeamento_tecnico": false
+      "tem_mapeamento_tecnico": false,
+      "camadas_produto": [
+        "Core",
+        "Analytics"
+      ]
     },
     {
       "nome": "Encerramento",
@@ -421,7 +467,11 @@ const DATA = {
       "bounded_context": "Processa o cancelamento definitivo de cartão ou conta",
       "sistemas_origem": "Core banking de contas",
       "tipo_ddd": "Support",
-      "tem_mapeamento_tecnico": false
+      "tem_mapeamento_tecnico": false,
+      "camadas_produto": [
+        "Core",
+        "Analytics"
+      ]
     },
     {
       "nome": "Anuidade",
@@ -429,7 +479,12 @@ const DATA = {
       "bounded_context": "Calcula, cobra e administra isenções/negociação da anuidade do cartão",
       "sistemas_origem": "Motor de anuidade (regras de isenção e negociação)",
       "tipo_ddd": "Support",
-      "tem_mapeamento_tecnico": false
+      "tem_mapeamento_tecnico": false,
+      "camadas_produto": [
+        "Core",
+        "Integration",
+        "Analytics"
+      ]
     },
     {
       "nome": "Entrega",
@@ -437,20 +492,26 @@ const DATA = {
       "bounded_context": "Rastreia a entrega física do cartão, do despacho até a confirmação de recebimento",
       "sistemas_origem": "Integração com transportadora/Correios",
       "tipo_ddd": "Support",
-      "tem_mapeamento_tecnico": false
+      "tem_mapeamento_tecnico": false,
+      "camadas_produto": [
+        "Core",
+        "Integration",
+        "Analytics"
+      ]
     }
   ]
 };
 
-function ddaTagClass(tipo) {
-  return { Core: "core", Support: "support", Generic: "generic" }[tipo] || "generic";
+function camadaTagClass(camada) {
+  return { Core: "core-p", Integration: "integration-p", Analytics: "analytics-p" }[camada] || "core-p";
 }
 
 function renderSubGrid() {
   const container = document.getElementById("sub-grid");
   container.innerHTML = DATA.subdominios.map(sub => `
-    <div class="sub-card" data-ddd="${sub.tipo_ddd}">
-      <h4>${sub.nome}<span class="ddd-tag ${ddaTagClass(sub.tipo_ddd)}">${sub.tipo_ddd}</span></h4>
+    <div class="sub-card" data-camadas="${sub.camadas_produto.join(",")}">
+      <h4>${sub.nome}</h4>
+      <div class="camada-tags">${sub.camadas_produto.map(c => `<span class="camada-tag ${camadaTagClass(c)}">${c}</span>`).join("")}</div>
       <p>${sub.bounded_context}</p>
       <div class="origem">Origem: ${sub.sistemas_origem}${sub.tem_mapeamento_tecnico ? " · piloto com schema físico" : ""}</div>
     </div>
@@ -458,33 +519,35 @@ function renderSubGrid() {
 }
 
 function setupFilters() {
-  const buttons = document.querySelectorAll("#ddd-filters .filter-btn");
+  const buttons = document.querySelectorAll("#camada-filters .filter-btn");
   buttons.forEach(btn => {
     btn.addEventListener("click", () => {
       buttons.forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       const filter = btn.dataset.filter;
       document.querySelectorAll("#sub-grid .sub-card").forEach(card => {
-        card.classList.toggle("dimmed", filter !== "all" && card.dataset.ddd !== filter);
+        const camadas = card.dataset.camadas.split(",");
+        card.classList.toggle("dimmed", filter !== "all" && !camadas.includes(filter));
       });
     });
   });
 }
 
-function setupTabs() {
-  const tabButtons = document.querySelectorAll("nav.tabs button");
-  tabButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      tabButtons.forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      document.querySelectorAll("section.tab-panel").forEach(panel => {
-        panel.classList.toggle("active", panel.id === `tab-${btn.dataset.tab}`);
-      });
+function setupScrollSpy() {
+  const links = document.querySelectorAll("nav.section-nav a");
+  const sections = Array.from(links).map(link => document.querySelector(link.getAttribute("href")));
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const link = document.querySelector(`nav.section-nav a[href="#${entry.target.id}"]`);
+      links.forEach(l => l.classList.remove("active"));
+      if (link) link.classList.add("active");
     });
-  });
+  }, { rootMargin: "-120px 0px -70% 0px" });
+  sections.forEach(section => section && observer.observe(section));
 }
 
 renderSubGrid();
 setupFilters();
-setupTabs();
+setupScrollSpy();
 </script>
