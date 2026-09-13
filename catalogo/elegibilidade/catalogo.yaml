@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=../_schema/catalogo.schema.json
+subdominio:
+  nome: Elegibilidade
+  bounded_context: Avalia se um cliente pode receber uma oferta de cartão, e sob quais
+    condições
+  sistemas_origem: Motor de elegibilidade / bureaus de crédito
+  tipo_ddd: Core
+produtos:
+- camada: Core
+  nome: core_eligibility_assessment
+  descricao: Resultado da avaliação de política de crédito para uma oferta de cartão
+  consumidores:
+  - Onboarding
+  - motor de ofertas
+  - Time de Performance
+  dono: Time de Crédito/Elegibilidade
+  status: V0 — a validar
+- camada: Integration
+  nome: integration_customer_offer
+  descricao: Cruza elegibilidade com dados cadastrais e histórico para consolidar
+    a oferta personalizada
+  consumidores:
+  - Marketing
+  - canais de venda
+  - Time de Performance
+  dono: Time de Crédito/Elegibilidade
+  status: V0 — a validar
+- camada: Analytics
+  nome: analytics_eligibility_conversion
+  descricao: Taxa de conversão de elegíveis em propostas iniciadas
+  consumidores:
+  - Growth
+  - marketing
+  - Time de Performance
+  dono: Time de Crédito/Elegibilidade
+  status: V0 — a validar

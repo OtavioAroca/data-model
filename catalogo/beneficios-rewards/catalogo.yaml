@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=../_schema/catalogo.schema.json
+subdominio:
+  nome: Benefícios / Rewards
+  bounded_context: Administra pontos, cashback e resgates associados ao uso do cartão
+  sistemas_origem: Plataforma de rewards
+  tipo_ddd: Generic
+produtos:
+- camada: Core
+  nome: core_points_cashback
+  descricao: Saldo e eventos de acúmulo/resgate de pontos ou cashback
+  consumidores:
+  - App do cliente
+  - parceiros
+  - Time de Performance
+  dono: Time de Rewards
+  status: V0 — a validar
+- camada: Analytics
+  nome: analytics_rewards_engagement
+  descricao: Uso de benefícios por segmento de cliente
+  consumidores:
+  - Marketing
+  - produto
+  - Time de Performance
+  dono: Time de Rewards
+  status: V0 — a validar

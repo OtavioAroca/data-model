@@ -1,0 +1,137 @@
+# yaml-language-server: $schema=../_schema/catalogo.schema.json
+subdominio:
+  nome: Compras / Autorização
+  bounded_context: Autoriza e captura as transações realizadas com o cartão, incluindo
+    o plano de parcelamento decidido no ato da compra
+  sistemas_origem: Switch de autorização, rede/bandeira
+  tipo_ddd: Core
+produtos:
+- camada: Core
+  nome: core_credit_purchase
+  descricao: Ciclo de vida da compra de crédito (approved → denied/cancelled → clearing
+    → processed) no rail de crédito, incluindo parcelamento decidido no ato da compra
+    quando aplicável
+  consumidores:
+  - Silver interno
+  - auditoria
+  - financeiro
+  - Time de Performance
+  dono: Time de Autorização · Crédito
+  status: V0 — a validar
+- camada: Core
+  nome: core_debit_purchase
+  descricao: Ciclo de vida da compra de débito (approved → denied/cancelled → clearing
+    → processed) no rail de débito
+  consumidores:
+  - Silver interno
+  - auditoria
+  - financeiro
+  - Time de Performance
+  dono: Time de Autorização · Débito
+  status: V0 — a validar
+- camada: Integration
+  nome: integration_purchase_journey
+  descricao: Une purchase de crédito e débito (schema padronizado) com o detalhamento
+    de parcelas do crédito e o estorno vindo de Disputas — grão de compra, com parcelas
+    relacionadas quando existirem
+  consumidores:
+  - Risco
+  - fraude
+  - atendimento
+  - Time de Performance
+  dono: Time de Autorização
+  status: V0 — a validar
+- camada: Analytics
+  nome: analytics_extrato_cliente
+  descricao: Extrato do cliente com completude e ordenação cronológica exigidas legalmente
+  consumidores:
+  - App
+  - atendimento
+  - Time de Performance
+  dono: Time de Autorização
+  status: V0 — a validar
+- camada: Analytics
+  nome: analytics_comportamento_gasto
+  descricao: 'Métricas agregadas de gasto: ticket médio, categorias, frequência'
+  consumidores:
+  - Risco de crédito
+  - marketing/rewards
+  - Time de Performance
+  dono: Time de Autorização
+  status: V0 — a validar
+- camada: Analytics
+  nome: analytics_taxa_aprovacao_compra
+  descricao: Taxa de aprovação/negação/cancelamento de compras por segmento, canal
+    e bandeira
+  consumidores:
+  - Risco
+  - produto
+  - Time de Performance
+  dono: Time de Autorização
+  status: V0 — a validar
+- camada: Analytics
+  nome: analytics_motivos_negacao_compra
+  descricao: Motivos de negação de compra agregados, para calibrar políticas de crédito
+    e limite
+  consumidores:
+  - Risco de crédito
+  - Time de Limite
+  - Time de Performance
+  dono: Time de Autorização
+  status: V0 — a validar
+- camada: Analytics
+  nome: analytics_ranking_lojista_categoria
+  descricao: Ranking de lojistas e categorias (MCC) mais usados pelos clientes
+  consumidores:
+  - Marketing
+  - parcerias comerciais
+  - Time de Performance
+  dono: Time de Autorização
+  status: V0 — a validar
+- camada: Analytics
+  nome: analytics_adocao_parcelamento
+  descricao: Adoção e perfil de parcelamento nas compras (nº de parcelas, ticket médio
+    parcelado)
+  consumidores:
+  - Produto
+  - financeiro
+  - Time de Performance
+  dono: Time de Autorização
+  status: V0 — a validar
+- camada: Analytics
+  nome: analytics_latencia_liquidacao_compra
+  descricao: Tempo entre aprovação e liquidação (clearing/processed) da compra, para
+    monitorar SLA operacional
+  consumidores:
+  - Operações
+  - financeiro
+  - Time de Performance
+  dono: Time de Autorização
+  status: V0 — a validar
+- camada: Analytics
+  nome: analytics_mix_canal
+  descricao: Mix de compras por canal (presencial, e-commerce, recorrência)
+  consumidores:
+  - Produto
+  - marketing
+  - Time de Performance
+  dono: Time de Autorização
+  status: V0 — a validar
+- camada: Analytics
+  nome: analytics_gasto_internacional
+  descricao: Volume e câmbio de compras internacionais
+  consumidores:
+  - Tesouraria
+  - compliance
+  - Time de Performance
+  dono: Time de Autorização
+  status: V0 — a validar
+- camada: Analytics
+  nome: analytics_gasto_elegivel_rewards
+  descricao: Volume de gasto elegível a cashback/pontos, por cliente e categoria
+  consumidores:
+  - Rewards
+  - marketing
+  - Time de Performance
+  dono: Time de Autorização
+  status: V0 — a validar

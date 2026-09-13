@@ -1,0 +1,302 @@
+# yaml-language-server: $schema=../_schema/mapeamento-tecnico.schema.json
+contexto: Piloto de mapeamento técnico — subdomínio Compras / Autorização (Core +
+  Integration).
+notas:
+- titulo: Correção de nomenclatura
+  texto: Os 5 tópicos de status (approved/denied/cancelled/clearing/processed) alimentam
+    a fonte 'purchase' (grão de compra), não 'transaction'. A fonte 'transaction'
+    é outra coisa — só existe em crédito, tópico único, carrega o detalhamento de
+    parcelas (grão de parcela, N por compra). Dentro de 'transaction', o ID da compra
+    vem preenchido na linha da compra e nulo nas linhas de parcela — sugere mistura
+    de cabeçalho e detalhe na mesma fonte, a resolver no desenho de schema físico.
+- titulo: Pendências de validação
+  texto: '(1) A regra de precedência de status em L2 é regra de NEGÓCIO, não dedup
+    técnico por timestamp de chegada — precisa ser definida pelo time de domínio (ex:
+    um cancelled deve sempre prevalecer mesmo chegando depois de um clearing?). (2)
+    Se risco/fraude/atendimento também precisam do histórico completo, além do estado
+    atual — hoje não confirmado. (3) Se débito tem equivalente ao tópico transaction_type
+    do crédito — hoje não confirmado.'
+- titulo: Produto vs. insumo interno
+  texto: 'Sem consumidor externo confirmado, core_credit_transaction e core_credit_transaction_type
+    não aparecem como linha própria no Catálogo V0 — continuam Core (fonte única,
+    sem cruzamento de domínio), só não são produtos expostos com contrato/SLA próprio;
+    são insumo interno de integration_purchase_journey. Padrão aplicado na dúvida:
+    só expor como produto quando houver evidência real de consumo externo; promover
+    depois se aparecer.'
+tabelas_fisicas:
+- produto: core_credit_purchase
+  camada_produto: Core
+  tabela_fisica: bronze.purchases__credit_approved
+  camada_medalhao: Bronze
+  papel: Tópico raw (staging)
+  pipeline: Streaming ingestion (platform)
+  frequencia: Streaming contínuo
+  fonte_origem: 'Fonte: rail de crédito, tópico approved'
+- produto: core_credit_purchase
+  camada_produto: Core
+  tabela_fisica: bronze.purchases__credit_denied
+  camada_medalhao: Bronze
+  papel: Tópico raw (staging)
+  pipeline: Streaming ingestion (platform)
+  frequencia: Streaming contínuo
+  fonte_origem: 'Fonte: rail de crédito, tópico denied'
+- produto: core_credit_purchase
+  camada_produto: Core
+  tabela_fisica: bronze.purchases__credit_cancelled
+  camada_medalhao: Bronze
+  papel: Tópico raw (staging)
+  pipeline: Streaming ingestion (platform)
+  frequencia: Streaming contínuo
+  fonte_origem: 'Fonte: rail de crédito, tópico cancelled'
+- produto: core_credit_purchase
+  camada_produto: Core
+  tabela_fisica: bronze.purchases__credit_clearing
+  camada_medalhao: Bronze
+  papel: Tópico raw (staging)
+  pipeline: Streaming ingestion (platform)
+  frequencia: Streaming contínuo
+  fonte_origem: 'Fonte: rail de crédito, tópico clearing'
+- produto: core_credit_purchase
+  camada_produto: Core
+  tabela_fisica: bronze.purchases__credit_processed
+  camada_medalhao: Bronze
+  papel: Tópico raw (staging)
+  pipeline: Streaming ingestion (platform)
+  frequencia: Streaming contínuo
+  fonte_origem: 'Fonte: rail de crédito, tópico processed'
+- produto: core_credit_purchase
+  camada_produto: Core
+  tabela_fisica: silver_l1.purchases__credit_purchase
+  camada_medalhao: Silver L1
+  papel: Histórico de eventos de status (append-only, N linhas por compra)
+  pipeline: pipeline_core_purchases_credit_purchase
+  frequencia: 'Incremental: aprovação em minutos, status final (processed) em D+1'
+  lineage:
+  - bronze.purchases__credit_approved
+  - bronze.purchases__credit_denied
+  - bronze.purchases__credit_cancelled
+  - bronze.purchases__credit_clearing
+  - bronze.purchases__credit_processed
+- produto: core_credit_purchase
+  camada_produto: Core
+  tabela_fisica: silver_l2.purchases__credit_purchase
+  camada_medalhao: Silver L2
+  papel: Interface exposta do produto — estado atual via regra de precedência de status
+    (regra de negócio, não dedup técnico) — 1 linha por compra
+  pipeline: pipeline_core_purchases_credit_purchase
+  frequencia: 'Incremental: aprovação em minutos, status final (processed) em D+1'
+  lineage:
+  - silver_l1.purchases__credit_purchase
+- produto: core_debit_purchase
+  camada_produto: Core
+  tabela_fisica: bronze.purchases__debit_approved
+  camada_medalhao: Bronze
+  papel: Tópico raw (staging)
+  pipeline: Streaming ingestion (platform)
+  frequencia: Streaming contínuo
+  fonte_origem: 'Fonte: rail de débito, tópico approved'
+- produto: core_debit_purchase
+  camada_produto: Core
+  tabela_fisica: bronze.purchases__debit_denied
+  camada_medalhao: Bronze
+  papel: Tópico raw (staging)
+  pipeline: Streaming ingestion (platform)
+  frequencia: Streaming contínuo
+  fonte_origem: 'Fonte: rail de débito, tópico denied'
+- produto: core_debit_purchase
+  camada_produto: Core
+  tabela_fisica: bronze.purchases__debit_cancelled
+  camada_medalhao: Bronze
+  papel: Tópico raw (staging)
+  pipeline: Streaming ingestion (platform)
+  frequencia: Streaming contínuo
+  fonte_origem: 'Fonte: rail de débito, tópico cancelled'
+- produto: core_debit_purchase
+  camada_produto: Core
+  tabela_fisica: bronze.purchases__debit_clearing
+  camada_medalhao: Bronze
+  papel: Tópico raw (staging)
+  pipeline: Streaming ingestion (platform)
+  frequencia: Streaming contínuo
+  fonte_origem: 'Fonte: rail de débito, tópico clearing'
+- produto: core_debit_purchase
+  camada_produto: Core
+  tabela_fisica: bronze.purchases__debit_processed
+  camada_medalhao: Bronze
+  papel: Tópico raw (staging)
+  pipeline: Streaming ingestion (platform)
+  frequencia: Streaming contínuo
+  fonte_origem: 'Fonte: rail de débito, tópico processed'
+- produto: core_debit_purchase
+  camada_produto: Core
+  tabela_fisica: silver_l1.purchases__debit_purchase
+  camada_medalhao: Silver L1
+  papel: Histórico de eventos de status (append-only, N linhas por compra)
+  pipeline: pipeline_core_purchases_debit_purchase
+  frequencia: 'Incremental: aprovação em minutos, status final (processed) em D+1'
+  lineage:
+  - bronze.purchases__debit_approved
+  - bronze.purchases__debit_denied
+  - bronze.purchases__debit_cancelled
+  - bronze.purchases__debit_clearing
+  - bronze.purchases__debit_processed
+- produto: core_debit_purchase
+  camada_produto: Core
+  tabela_fisica: silver_l2.purchases__debit_purchase
+  camada_medalhao: Silver L2
+  papel: Interface exposta do produto — estado atual via regra de precedência de status
+    (regra de negócio, não dedup técnico) — 1 linha por compra
+  pipeline: pipeline_core_purchases_debit_purchase
+  frequencia: 'Incremental: aprovação em minutos, status final (processed) em D+1'
+  lineage:
+  - silver_l1.purchases__debit_purchase
+- produto: core_credit_transaction
+  camada_produto: Core
+  tabela_fisica: bronze.purchases__credit_transaction
+  camada_medalhao: Bronze
+  papel: Tópico raw (staging)
+  pipeline: Streaming ingestion (platform)
+  frequencia: Streaming contínuo
+  fonte_origem: 'Fonte: rail de crédito, tópico único ''transaction'' (compra + parcelas)'
+- produto: core_credit_transaction
+  camada_produto: Core
+  tabela_fisica: silver.purchases__credit_transaction
+  camada_medalhao: Silver
+  papel: Insumo interno de integration_purchase_journey (não é produto catalogado)
+  pipeline: pipeline_integration_purchase_journey
+  frequencia: Incremental, mesma cadência da fonte
+  lineage:
+  - bronze.purchases__credit_transaction
+- produto: core_credit_transaction_type
+  camada_produto: Core
+  tabela_fisica: bronze.purchases__credit_transaction_type
+  camada_medalhao: Bronze
+  papel: Tópico raw (staging) — dimensão
+  pipeline: Streaming ingestion (platform)
+  frequencia: Baixa frequência (dimensão muda pouco)
+  fonte_origem: 'Fonte: rail de crédito, tópico ''transaction_type'''
+- produto: core_credit_transaction_type
+  camada_produto: Core
+  tabela_fisica: silver.purchases__credit_transaction_type
+  camada_medalhao: Silver
+  papel: Insumo interno de integration_purchase_journey (não é produto catalogado)
+  pipeline: pipeline_integration_purchase_journey
+  frequencia: Batch diário (dimensão de baixa mudança)
+  lineage:
+  - bronze.purchases__credit_transaction_type
+- produto: integration_purchase_journey
+  camada_produto: Integration
+  tabela_fisica: gold.integration__purchase_journey
+  camada_medalhao: Gold
+  papel: Interface exposta do produto — grão de compra, com parcelas relacionadas
+    quando existirem
+  pipeline: pipeline_integration_purchase_journey
+  frequencia: 'Herda o SLA incremental dos Core: parcial em minutos, completo em D+1'
+  lineage:
+  - silver_l2.purchases__credit_purchase
+  - silver_l2.purchases__debit_purchase
+  - silver.purchases__credit_transaction
+  - silver.purchases__credit_transaction_type
+  - silver_l2.disputes__chargeback
+- produto: analytics_extrato_cliente
+  camada_produto: Analytics
+  tabela_fisica: gold.analytics__extrato_cliente
+  camada_medalhao: Gold
+  papel: Interface exposta do produto
+  pipeline: pipeline_analytics_extrato_cliente
+  frequencia: Incremental, mesma cadência de integration_purchase_journey (completude
+    legal)
+  lineage:
+  - gold.integration__purchase_journey
+- produto: analytics_comportamento_gasto
+  camada_produto: Analytics
+  tabela_fisica: gold.analytics__comportamento_gasto
+  camada_medalhao: Gold
+  papel: Interface exposta do produto
+  pipeline: pipeline_analytics_comportamento_gasto
+  frequencia: Batch diário
+  lineage:
+  - gold.integration__purchase_journey
+- produto: analytics_taxa_aprovacao_compra
+  camada_produto: Analytics
+  tabela_fisica: gold.analytics__taxa_aprovacao_compra
+  camada_medalhao: Gold
+  papel: Interface exposta do produto
+  pipeline: pipeline_analytics_taxa_aprovacao_compra
+  frequencia: Batch diário
+  lineage:
+  - silver_l2.purchases__credit_purchase
+  - silver_l2.purchases__debit_purchase
+- produto: analytics_motivos_negacao_compra
+  camada_produto: Analytics
+  tabela_fisica: gold.analytics__motivos_negacao_compra
+  camada_medalhao: Gold
+  papel: Interface exposta do produto
+  pipeline: pipeline_analytics_motivos_negacao_compra
+  frequencia: Batch diário
+  lineage:
+  - silver_l2.purchases__credit_purchase
+  - silver_l2.purchases__debit_purchase
+- produto: analytics_ranking_lojista_categoria
+  camada_produto: Analytics
+  tabela_fisica: gold.analytics__ranking_lojista_categoria
+  camada_medalhao: Gold
+  papel: Interface exposta do produto
+  pipeline: pipeline_analytics_ranking_lojista_categoria
+  frequencia: Batch diário/semanal
+  lineage:
+  - gold.integration__purchase_journey
+- produto: analytics_adocao_parcelamento
+  camada_produto: Analytics
+  tabela_fisica: gold.analytics__adocao_parcelamento
+  camada_medalhao: Gold
+  papel: 'Interface exposta do produto — ATENÇÃO: consome core_credit_transaction
+    diretamente, hoje marcado como insumo interno (não produto). Este é exatamente
+    o tipo de consumidor externo real que justificaria promovê-lo a produto Core próprio,
+    com contrato e dono formal.'
+  pipeline: pipeline_analytics_adocao_parcelamento
+  frequencia: Batch diário
+  lineage:
+  - silver.purchases__credit_transaction
+  - gold.integration__purchase_journey
+- produto: analytics_latencia_liquidacao_compra
+  camada_produto: Analytics
+  tabela_fisica: gold.analytics__latencia_liquidacao_compra
+  camada_medalhao: Gold
+  papel: Interface exposta do produto — consome L1 (histórico de eventos), não L2,
+    porque precisa de múltiplos timestamps por compra (approved_at, clearing_at, processed_at)
+    para calcular a latência entre estágios
+  pipeline: pipeline_analytics_latencia_liquidacao_compra
+  frequencia: Batch diário
+  lineage:
+  - silver_l1.purchases__credit_purchase
+  - silver_l1.purchases__debit_purchase
+- produto: analytics_mix_canal
+  camada_produto: Analytics
+  tabela_fisica: gold.analytics__mix_canal
+  camada_medalhao: Gold
+  papel: Interface exposta do produto
+  pipeline: pipeline_analytics_mix_canal
+  frequencia: Batch diário
+  lineage:
+  - gold.integration__purchase_journey
+- produto: analytics_gasto_internacional
+  camada_produto: Analytics
+  tabela_fisica: gold.analytics__gasto_internacional
+  camada_medalhao: Gold
+  papel: 'Interface exposta do produto — PENDÊNCIA: taxa de câmbio provavelmente vem
+    de uma fonte de Tesouraria ainda não mapeada'
+  pipeline: pipeline_analytics_gasto_internacional
+  frequencia: Batch diário
+  lineage:
+  - gold.integration__purchase_journey
+- produto: analytics_gasto_elegivel_rewards
+  camada_produto: Analytics
+  tabela_fisica: gold.analytics__gasto_elegivel_rewards
+  camada_medalhao: Gold
+  papel: 'Interface exposta do produto — PENDÊNCIA: regra de elegibilidade depende
+    do subdomínio Benefícios/Rewards, ainda não mapeado'
+  pipeline: pipeline_analytics_gasto_elegivel_rewards
+  frequencia: Batch diário
+  lineage:
+  - gold.integration__purchase_journey
