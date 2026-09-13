@@ -1,13 +1,75 @@
-# Mapa do Parque de Dados
+# Presentation
 
-## Abertura
+Duas ferramentas independentes, ambas página única HTML/CSS/JS offline (zero
+build, zero CDN, zero servidor):
+
+- [**Apresentação Executiva**](#apresentação-executiva) — forma de modelar,
+  benefícios e estudo de caso, para stakeholders.
+- [**Mapa do Parque de Dados**](#mapa-do-parque-de-dados) — diagrama
+  interativo das tabelas físicas do piloto (Compras/Autorização).
+
+A apresentação executiva linka o mapa (botão "Abrir mapa interativo" na aba
+Estudo de Caso) em vez de reimplementar o diagrama — ver
+[`docs/adr/0008`](../docs/adr/0008-apresentacao-executiva-como-ferramenta-separada.md).
+
+---
+
+## Apresentação Executiva
+
+**Arquivo gerado:** `apresentacao-executiva.html`
+
+Abra `apresentacao-executiva.html` direto no navegador (duplo-clique ou
+arraste para o navegador). Funciona 100% offline via `file://`.
+
+### Conteúdo
+
+Três abas:
+
+- **Forma de Modelar** — os três eixos de classificação (DDD, Camada
+  Medalhão, Core/Integration/Analytics), a desambiguação "Core tem 3
+  significados", e o grid dos 15 subdomínios do domínio Cartão (com filtro
+  Core/Support/Generic) — dados lidos de `catalog/index.yaml`.
+- **Benefícios** — por que modelar dessa forma (Silver L1 vs L2, Integration,
+  Analytics em português, alinhamento com bounded contexts, escalabilidade).
+- **Estudo de Caso** — narrativa do piloto Compras/Autorização (pipeline
+  Bronze→Silver L1/L2→Gold, produtos propostos, ressalvas registradas nos
+  ADRs) com link para o mapa interativo.
+
+### Como Regenerar
+
+Se `catalog/index.yaml` for editado, regenere com:
+
+```bash
+python3 scripts/build_apresentacao_executiva.py
+```
+
+O script lê `catalog/index.yaml` e injeta o grid de subdomínios em
+`apresentacao-executiva.template.html`, escrevendo `apresentacao-executiva.html`.
+O restante do conteúdo (conceitos, benefícios, narrativa do estudo de caso) é
+texto estático no template — editar o `.template.html` diretamente e
+regerar.
+
+### Verificação
+
+1. Abra `presentation/apresentacao-executiva.html` no navegador.
+2. Navegue pelas 3 abas, teste o filtro Core/Support/Generic no grid de
+   subdomínios.
+3. Clique em "Abrir mapa interativo" e confirme que `parque-de-dados.html`
+   abre em nova aba.
+4. Console do navegador (`F12`) sem erros de JS.
+
+---
+
+## Mapa do Parque de Dados
+
+### Abertura
 
 **Arquivo gerado:** `parque-de-dados.html`
 
 Abra `parque-de-dados.html` direto no navegador (duplo-clique ou arraste para o
 navegador). Funciona 100% offline via `file://` — não precisa de servidor.
 
-## Conteúdo
+### Conteúdo
 
 As 29 tabelas físicas de Compras/Autorização (único subdomínio com schema
 físico definido — ver
@@ -31,7 +93,7 @@ Silver / Gold):
   e relacional, e a animação de fluxo, ficam sempre visíveis/ativas (sem
   toggle).
 
-## Como Regenerar
+### Como Regenerar
 
 Se os YAMLs de catálogo forem editados, regenere com:
 
@@ -50,7 +112,7 @@ O script:
 Saída inclui um resumo de contagens para verificação rápida (tabelas,
 relações, arestas de lineage, tabelas externas).
 
-## Tecnologia
+### Tecnologia
 
 - **Arquivo único, zero CDN** — CSS/JS inline em `parque-de-dados.html`.
   Offline, abre direto via `file://`.
@@ -60,7 +122,7 @@ relações, arestas de lineage, tabelas externas).
 - Ferramenta independente da apresentação anterior deste repositório — ver
   [`docs/adr/0002`](../docs/adr/0002-ferramenta-nova-independente-da-apresentacao-anterior.md).
 
-## Verificação
+### Verificação
 
 1. Abra `presentation/parque-de-dados.html` no navegador.
 2. Clique em algumas tabelas, confira colunas/tipos, confira que as setas
