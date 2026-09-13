@@ -131,6 +131,29 @@
   .edge-relacional.dimmed { opacity: 0.06; }
   .flow-dot { fill: var(--edge-lineage); }
 
+  .table-card-group { cursor: grab; }
+  .expand-toggle { cursor: pointer; }
+  .expand-toggle circle { fill: var(--bg); stroke: var(--border); }
+  .expand-toggle path { stroke: var(--text-muted); stroke-width: 1.6; fill: none; }
+  .card-columns-fo { overflow: hidden; }
+  .card-columns {
+    width: 100%; height: 100%;
+    overflow-x: hidden; overflow-y: auto;
+    box-sizing: border-box;
+    padding: 2px 4px;
+    font: 10.5px/1.3 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--panel-bg);
+  }
+  .card-columns table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+  .card-columns td {
+    padding: 2px 4px; border-bottom: 1px solid var(--border); color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .card-columns td:first-child { width: 62%; }
+  .card-columns td:last-child { width: 38%; }
+  .card-columns .pk { color: var(--layer-gold); font-weight: 700; }
+  .card-columns .fk { color: var(--edge-relacional); font-weight: 700; }
+
   #side-panel { border-left: 1px solid var(--border); background: var(--panel-bg); overflow-y: auto; padding: 16px; }
   #side-panel h2 { font-size: 15px; margin: 0 0 2px; }
   #side-panel .badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 10px; color: #fff; margin-right: 4px; }
@@ -157,6 +180,7 @@
     <div class="filters" id="filters"></div>
 
     <button class="reset" id="reset-view">Centralizar</button>
+    <button class="reset" id="reorganize-view">Reorganizar</button>
   </div>
 
   <div id="canvas-wrap">
@@ -1971,6 +1995,8 @@ const PREFIXO_PARA_CAMADA = {
 
 const CARD_W = 210;
 const CARD_H = 56;
+const HEADER_H = 40;
+const EXPANDED_H = 240;
 const COL_GAP = 170;
 const ROW_GAP = 14;
 const COL_X0 = 40;
@@ -2037,6 +2063,9 @@ function montarNodes() {
     lista.forEach((n, rowIdx) => {
       n.x = COL_X0 + colIdx * (CARD_W + COL_GAP);
       n.y = ROW_Y0 + rowIdx * (CARD_H + ROW_GAP);
+      n.gridX = n.x;
+      n.gridY = n.y;
+      n.expanded = false;
       nodes.push(n);
     });
   });
@@ -2045,13 +2074,19 @@ function montarNodes() {
   nodes.forEach(n => nodeById[n.id] = n);
 }
 
+function cardHeight(n) {
+  return n.expanded ? EXPANDED_H : CARD_H;
+}
+
 function contentHeight() {
   let max = 0;
-  nodes.forEach(n => max = Math.max(max, n.y + CARD_H));
+  nodes.forEach(n => max = Math.max(max, n.y + cardHeight(n)));
   return max + 40;
 }
 function contentWidth() {
-  return COL_X0 + LAYER_ORDER.length * (CARD_W + COL_GAP);
+  let max = COL_X0 + LAYER_ORDER.length * (CARD_W + COL_GAP);
+  nodes.forEach(n => max = Math.max(max, n.x + CARD_W + 40));
+  return max;
 }
 
 // ---------------------------------------------------------------------
@@ -2062,7 +2097,7 @@ let rootG;
 
 function edgePoint(node, side) {
   // side: 'right' (saída) ou 'left' (entrada)
-  const y = node.y + CARD_H / 2;
+  const y = node.y + cardHeight(node) / 2;
   return { x: side === "right" ? node.x + CARD_W : node.x, y };
 }
 
@@ -2139,7 +2174,7 @@ function renderLineageEdges() {
       const a = nodeById[upstream], b = nodeById[t.nome];
       const id = `lineage-${i++}`;
       const dimmed = (searchTerm && !(nodeMatchesSearch(a) || nodeMatchesSearch(b))) ? " dimmed" : "";
-      const path = el("path", { id, class: "edge-lineage dashflow" + dimmed, d: pathBetween(a, b), "marker-end": "url(#arrow-lineage)" });
+      const path = el("path", { id, class: "edge-lineage dashflow" + dimmed, d: pathBetween(a, b), "marker-end": "url(#arrow-lineage)", "data-from": upstream, "data-to": t.nome });
       g.appendChild(path);
       const dot = el("circle", { r: 3, class: "flow-dot" });
       const anim = el("animateMotion", { dur: (2.4 + Math.random() * 1.2).toFixed(1) + "s", repeatCount: "indefinite" });
@@ -2160,7 +2195,7 @@ function renderRelationalEdges() {
     const a = nodeById[r.tabela_origem], b = nodeById[r.tabela_destino];
     const dimmed = (searchTerm && !(nodeMatchesSearch(a) || nodeMatchesSearch(b))) ? " dimmed" : "";
     const d = pathBetween(a, b);
-    g.appendChild(el("path", { class: "edge-relacional" + dimmed, d, "marker-end": "url(#arrow-relacional)" }));
+    g.appendChild(el("path", { class: "edge-relacional" + dimmed, d, "marker-end": "url(#arrow-relacional)", "data-from": r.tabela_origem, "data-to": r.tabela_destino }));
   }
   rootG.appendChild(g);
 }
@@ -2170,28 +2205,150 @@ function renderNodes() {
   for (const n of nodes) {
     const dimmed = (searchTerm && !nodeMatchesSearch(n)) || !nodeActive(n);
     const selected = n.id === selectedId;
-    const group = el("g", { transform: `translate(${n.x},${n.y})`, style: "cursor:pointer" });
+    const h = cardHeight(n);
+    const group = el("g", { transform: `translate(${n.x},${n.y})`, class: "table-card-group" });
     group.appendChild(el("rect", {
-      width: CARD_W, height: CARD_H,
+      width: CARD_W, height: h,
       class: "table-card" + (selected ? " selected" : "") + (dimmed ? " dimmed" : "") + (n.externo ? " external" : ""),
       stroke: n.externo ? LAYER_COLOR[n.camada] : undefined,
     }));
-    group.appendChild(el("rect", { width: 5, height: CARD_H, fill: n.externo ? "transparent" : LAYER_COLOR[n.camada], rx: 2 }));
+    group.appendChild(el("rect", { width: 5, height: h, fill: n.externo ? "transparent" : LAYER_COLOR[n.camada], rx: 2 }));
     const title = el("text", { x: 14, y: 22, class: "table-title" }, document.createTextNode(n.curto));
     group.appendChild(title);
     if (n.externo) {
       group.appendChild(el("text", { x: 14, y: 38, class: "table-sub" }, document.createTextNode("externo — outro subdomínio")));
     } else {
-      const ncols = n.tabela.colunas.length;
-      const npk = n.tabela.colunas.filter(c => c.chave_primaria).length;
-      const nfk = n.tabela.colunas.filter(c => c.chave_estrangeira).length;
-      group.appendChild(el("text", { x: 14, y: 38, class: "table-sub" },
-        document.createTextNode(`${ncols} colunas${npk ? " · PK" : ""}${nfk ? ` · ${nfk} FK` : ""}`)));
+      if (!n.expanded) {
+        const ncols = n.tabela.colunas.length;
+        const npk = n.tabela.colunas.filter(c => c.chave_primaria).length;
+        const nfk = n.tabela.colunas.filter(c => c.chave_estrangeira).length;
+        group.appendChild(el("text", { x: 14, y: 38, class: "table-sub" },
+          document.createTextNode(`${ncols} colunas${npk ? " · PK" : ""}${nfk ? ` · ${nfk} FK` : ""}`)));
+      } else {
+        group.appendChild(renderCardColumns(n, h));
+      }
+      group.appendChild(renderExpandToggle(n));
     }
-    group.addEventListener("click", () => selecionarNode(n.id));
+    setupNodeDrag(group, n);
     g.appendChild(group);
   }
   rootG.appendChild(g);
+}
+
+function renderExpandToggle(n) {
+  const size = 16;
+  const tx = CARD_W - size - 6, ty = 6;
+  const toggle = el("g", { class: "expand-toggle", transform: `translate(${tx},${ty})` });
+  toggle.appendChild(el("circle", { cx: size / 2, cy: size / 2, r: size / 2 }));
+  const chevronD = n.expanded
+    ? `M${size * 0.28},${size * 0.62} L${size * 0.5},${size * 0.38} L${size * 0.72},${size * 0.62}`
+    : `M${size * 0.28},${size * 0.38} L${size * 0.5},${size * 0.62} L${size * 0.72},${size * 0.38}`;
+  toggle.appendChild(el("path", { d: chevronD }));
+  toggle.addEventListener("mousedown", (e) => e.stopPropagation());
+  toggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    n.expanded = !n.expanded;
+    resolverColisoes();
+    render();
+  });
+  return toggle;
+}
+
+function renderCardColumns(n, h) {
+  const fo = el("foreignObject", { x: 0, y: HEADER_H, width: CARD_W, height: Math.max(0, h - HEADER_H - 6), class: "card-columns-fo" });
+  const div = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
+  div.setAttribute("class", "card-columns");
+  const rows = n.tabela.colunas.map(c => {
+    const marker = c.chave_primaria ? '<span class="pk">PK</span> ' : (c.chave_estrangeira ? '<span class="fk">FK</span> ' : "");
+    return `<tr><td>${marker}${c.nome}</td><td>${c.tipo}</td></tr>`;
+  }).join("");
+  div.innerHTML = `<table><tbody>${rows}</tbody></table>`;
+  fo.appendChild(div);
+  return fo;
+}
+
+function updateConnectedEdges(nodeId) {
+  svg.querySelectorAll(`path[data-from="${nodeId}"], path[data-to="${nodeId}"]`).forEach(path => {
+    const a = nodeById[path.getAttribute("data-from")];
+    const b = nodeById[path.getAttribute("data-to")];
+    if (a && b) path.setAttribute("d", pathBetween(a, b));
+  });
+}
+
+function boxesOverlap(a, b) {
+  const ax1 = a.x, ax2 = a.x + CARD_W, ay1 = a.y, ay2 = a.y + cardHeight(a);
+  const bx1 = b.x, bx2 = b.x + CARD_W, by1 = b.y, by2 = b.y + cardHeight(b);
+  return ax1 < bx2 && ax2 > bx1 && ay1 < by2 && ay2 > by1;
+}
+
+// Empurra sempre para baixo (nunca para cima) quem estiver sobrepondo outra
+// caixa, para que expandir/arrastar nunca deixe cartões sobrepostos.
+function resolverColisoes() {
+  const MAX_ITER = 20;
+  for (let iter = 0; iter < MAX_ITER; iter++) {
+    let any = false;
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = 0; j < nodes.length; j++) {
+        if (i === j) continue;
+        const a = nodes[i], b = nodes[j];
+        if (!boxesOverlap(a, b)) continue;
+        const lower = a.y <= b.y ? b : a;
+        const upper = a.y <= b.y ? a : b;
+        const overlapY = (upper.y + cardHeight(upper)) - lower.y;
+        if (overlapY > 0) {
+          lower.y += overlapY + ROW_GAP;
+          any = true;
+        }
+      }
+    }
+    if (!any) break;
+  }
+}
+
+function setupNodeDrag(group, n) {
+  let start = null;   // {mx, my} em coordenadas de tela no mousedown
+  let origin = null;  // {x, y} do nó no mousedown
+  let dragging = false;
+
+  function onMouseMove(e) {
+    if (!start) return;
+    const dx = (e.clientX - start.mx) / view.k;
+    const dy = (e.clientY - start.my) / view.k;
+    if (!dragging && Math.hypot(e.clientX - start.mx, e.clientY - start.my) > 4) {
+      dragging = true;
+      group.style.cursor = "grabbing";
+    }
+    if (!dragging) return;
+    n.x = origin.x + dx;
+    n.y = origin.y + dy;
+    group.setAttribute("transform", `translate(${n.x},${n.y})`);
+    updateConnectedEdges(n.id);
+  }
+
+  function onMouseUp() {
+    window.removeEventListener("mousemove", onMouseMove);
+    window.removeEventListener("mouseup", onMouseUp);
+    group.style.cursor = "";
+    const wasDragging = dragging;
+    start = null;
+    dragging = false;
+    if (!wasDragging) {
+      selecionarNode(n.id);
+    } else {
+      resolverColisoes();
+      render();
+    }
+  }
+
+  group.addEventListener("mousedown", (e) => {
+    if (e.target.closest && e.target.closest(".card-columns")) return;
+    e.stopPropagation();
+    start = { mx: e.clientX, my: e.clientY };
+    origin = { x: n.x, y: n.y };
+    dragging = false;
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  });
 }
 
 function applyTransform() {
@@ -2380,6 +2537,14 @@ document.getElementById("search-input").addEventListener("input", (e) => {
   render();
 });
 document.getElementById("reset-view").addEventListener("click", centerView);
+document.getElementById("reorganize-view").addEventListener("click", () => {
+  nodes.forEach(n => {
+    n.x = n.gridX;
+    n.y = n.gridY;
+    n.expanded = false;
+  });
+  render();
+});
 
 function centerView() {
   const wrap = document.getElementById("canvas-wrap");
@@ -2403,6 +2568,7 @@ function centerView() {
     applyTransform();
   });
   wrap.addEventListener("wheel", (e) => {
+    if (e.target.closest && e.target.closest(".card-columns")) return;
     e.preventDefault();
     const rect = wrap.getBoundingClientRect();
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
