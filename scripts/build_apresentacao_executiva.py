@@ -10,6 +10,8 @@ presentation/parque-de-dados.html em vez de reconstruir o diagrama.
 
 Lê:
   catalog/index.yaml
+  catalog/<slug>/catalog.yaml (todos os subdomínios)
+  catalog/compras-autorizacao/mapeamento-tecnico.yaml (estudo de caso)
 Escreve:
   presentation/apresentacao-executiva.html (injetando DATA no template)
 """
@@ -43,6 +45,29 @@ def load_camadas_produto(slug):
     return [c for c in ordem if c in camadas]
 
 
+def load_estudo_caso(slug):
+    """Produtos propostos e contagem de tabelas físicas por camada medalhão, para o estudo de caso."""
+    catalog = load_yaml(CATALOG_DIR / slug / "catalog.yaml")
+    mapeamento = load_yaml(CATALOG_DIR / slug / "mapeamento-tecnico.yaml")
+
+    produtos = [
+        {"camada": p["camada"], "nome": p["nome"], "descricao": p["descricao"]}
+        for p in catalog.get("produtos", [])
+    ]
+
+    tabelas = mapeamento.get("tabelas_fisicas", [])
+    contagem_camada = {}
+    for t in tabelas:
+        camada = t["camada_medalhao"]
+        contagem_camada[camada] = contagem_camada.get(camada, 0) + 1
+
+    return {
+        "produtos": produtos,
+        "total_tabelas": len(tabelas),
+        "contagem_camada": contagem_camada,
+    }
+
+
 def build_data():
     index_data = load_yaml(CATALOG_DIR / "index.yaml")
 
@@ -65,6 +90,7 @@ def build_data():
             "fonte": "catalog/index.yaml",
         },
         "subdominios": subdominios,
+        "estudo_caso": load_estudo_caso("compras-autorizacao"),
     }
 
 
@@ -95,6 +121,9 @@ def main():
     print(f"\nGerado: {OUTPUT_PATH}")
     print(f"  - {len(data['subdominios'])} subdomínios "
           f"({', '.join(f'{v} {k}' for k, v in contagem_ddd.items())})")
+    estudo_caso = data["estudo_caso"]
+    print(f"  - estudo de caso: {len(estudo_caso['produtos'])} produtos, "
+          f"{estudo_caso['total_tabelas']} tabelas físicas")
 
 
 if __name__ == "__main__":

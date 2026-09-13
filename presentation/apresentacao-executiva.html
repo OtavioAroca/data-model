@@ -133,6 +133,18 @@
   .pipeline-flow .stage.gold { border-left: 3px solid var(--layer-gold); }
   .pipeline-flow .arrow { color: var(--text-muted); }
 
+  .stats-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 24px; }
+  .stats-row .stat {
+    border: 1px solid var(--border);
+    background: var(--panel-bg);
+    border-radius: 8px;
+    padding: 8px 14px;
+    text-align: center;
+    min-width: 84px;
+  }
+  .stats-row .stat strong { display: block; font-size: 16px; }
+  .stats-row .stat span { font-size: 11px; color: var(--text-muted); }
+
   ul.produtos { list-style: none; margin: 0 0 20px; padding: 0; display: grid; gap: 8px; }
   ul.produtos li { border: 1px solid var(--border); background: var(--panel-bg); border-radius: 8px; padding: 10px 12px; }
   ul.produtos code { font-size: 12px; }
@@ -269,6 +281,7 @@
     <p class="lede">Subdomínio Core escolhido como piloto por ser o mais crítico do fluxo de cartão: autoriza e captura toda transação, incluindo o parcelamento decidido no ato da compra.</p>
 
     <h3 style="font-size:14px; margin-bottom:8px;">Pipeline: Bronze → Silver L1/L2 → Gold</h3>
+    <p class="lede" style="margin-bottom:12px;">O piloto tem <strong>dois rails</strong> (crédito e débito), cada um com 5 tópicos Bronze de status (approved/denied/cancelled/clearing/processed) → Silver L1 (histórico) → Silver L2 (estado atual). O rail de crédito ainda tem duas tabelas Core adicionais para o detalhamento de parcelas (<code>credit_transaction</code>, <code>credit_transaction_type</code>). Os dois rails convergem em <code>gold.integration__purchase_journey</code>, que junto dos produtos Analytics soma as tabelas Gold. Exemplo do rail de crédito:</p>
     <div class="pipeline-flow">
       <span class="stage bronze">bronze.purchases__credit_approved</span>
       <span class="arrow">→</span>
@@ -278,13 +291,10 @@
       <span class="arrow">→</span>
       <span class="stage gold">gold.integration__purchase_journey</span>
     </div>
+    <div class="stats-row" id="stats-row"></div>
 
     <h3 style="font-size:14px; margin-bottom:8px;">Produtos de dados propostos</h3>
-    <ul class="produtos">
-      <li><span class="camada-tag core-p">Core</span><code>core_credit_purchase</code> / <code>core_debit_purchase</code><div class="desc">Ciclo de vida da compra por rail (crédito e débito separados), cada um isolado no seu bounded context.</div></li>
-      <li><span class="camada-tag integration-p">Integration</span><code>integration_purchase_journey</code><div class="desc">Une crédito + débito num único grão de compra, com parcelas relacionadas — schema padronizado para Risco, Fraude e Atendimento.</div></li>
-      <li><span class="camada-tag analytics-p">Analytics</span><code>analytics_taxa_aprovacao_compra</code>, <code>analytics_extrato_cliente</code>, <code>analytics_comportamento_gasto</code> e outros<div class="desc">Moldados para casos de uso finais (risco, marketing, atendimento, compliance), nomeados em português.</div></li>
-    </ul>
+    <ul class="produtos" id="produtos-list"></ul>
 
     <h3 style="font-size:14px; margin-bottom:8px;">Ressalvas do piloto</h3>
     <ul class="ressalvas">
@@ -294,7 +304,7 @@
     </ul>
 
     <div class="map-cta-wrap">
-      <p>Para explorar as 29 tabelas físicas, colunas, lineage e relações deste piloto interativamente:</p>
+      <p id="map-cta-text">Para explorar as tabelas físicas, colunas, lineage e relações deste piloto interativamente:</p>
       <a class="map-cta" href="parque-de-dados.html" target="_blank" rel="noopener">Abrir mapa interativo →</a>
     </div>
   </section>
@@ -499,7 +509,84 @@ const DATA = {
         "Analytics"
       ]
     }
-  ]
+  ],
+  "estudo_caso": {
+    "produtos": [
+      {
+        "camada": "Core",
+        "nome": "core_credit_purchase",
+        "descricao": "Ciclo de vida da compra de crédito (approved → denied/cancelled → clearing → processed) no rail de crédito, incluindo parcelamento decidido no ato da compra quando aplicável"
+      },
+      {
+        "camada": "Core",
+        "nome": "core_debit_purchase",
+        "descricao": "Ciclo de vida da compra de débito (approved → denied/cancelled → clearing → processed) no rail de débito"
+      },
+      {
+        "camada": "Integration",
+        "nome": "integration_purchase_journey",
+        "descricao": "Une purchase de crédito e débito (schema padronizado) com o detalhamento de parcelas do crédito — grão de compra, com parcelas relacionadas quando existirem"
+      },
+      {
+        "camada": "Analytics",
+        "nome": "analytics_extrato_cliente",
+        "descricao": "Extrato do cliente com completude e ordenação cronológica exigidas legalmente"
+      },
+      {
+        "camada": "Analytics",
+        "nome": "analytics_comportamento_gasto",
+        "descricao": "Métricas agregadas de gasto: ticket médio, categorias, frequência"
+      },
+      {
+        "camada": "Analytics",
+        "nome": "analytics_taxa_aprovacao_compra",
+        "descricao": "Taxa de aprovação/negação/cancelamento de compras por segmento, canal e bandeira"
+      },
+      {
+        "camada": "Analytics",
+        "nome": "analytics_motivos_negacao_compra",
+        "descricao": "Motivos de negação de compra agregados, para calibrar políticas de crédito e limite"
+      },
+      {
+        "camada": "Analytics",
+        "nome": "analytics_ranking_lojista_categoria",
+        "descricao": "Ranking de lojistas e categorias (MCC) mais usados pelos clientes"
+      },
+      {
+        "camada": "Analytics",
+        "nome": "analytics_adocao_parcelamento",
+        "descricao": "Adoção e perfil de parcelamento nas compras (nº de parcelas, ticket médio parcelado)"
+      },
+      {
+        "camada": "Analytics",
+        "nome": "analytics_latencia_liquidacao_compra",
+        "descricao": "Tempo entre aprovação e liquidação (clearing/processed) da compra, para monitorar SLA operacional"
+      },
+      {
+        "camada": "Analytics",
+        "nome": "analytics_mix_canal",
+        "descricao": "Mix de compras por canal (presencial, e-commerce, recorrência)"
+      },
+      {
+        "camada": "Analytics",
+        "nome": "analytics_gasto_internacional",
+        "descricao": "Volume e câmbio de compras internacionais"
+      },
+      {
+        "camada": "Analytics",
+        "nome": "analytics_gasto_elegivel_rewards",
+        "descricao": "Volume de gasto elegível a cashback/pontos, por cliente e categoria"
+      }
+    ],
+    "total_tabelas": 29,
+    "contagem_camada": {
+      "Bronze": 12,
+      "Silver L1": 2,
+      "Silver L2": 2,
+      "Silver": 2,
+      "Gold": 11
+    }
+  }
 };
 
 function camadaTagClass(camada) {
@@ -533,6 +620,26 @@ function setupFilters() {
   });
 }
 
+function renderProdutos() {
+  const container = document.getElementById("produtos-list");
+  container.innerHTML = DATA.estudo_caso.produtos.map(p => `
+    <li><span class="camada-tag ${camadaTagClass(p.camada)}">${p.camada}</span><code>${p.nome}</code><div class="desc">${p.descricao}</div></li>
+  `).join("");
+}
+
+function renderStats() {
+  const ordem = ["Bronze", "Silver L1", "Silver L2", "Silver", "Gold"];
+  const contagem = DATA.estudo_caso.contagem_camada;
+  const container = document.getElementById("stats-row");
+  const stats = [{ label: "tabelas físicas", valor: DATA.estudo_caso.total_tabelas }]
+    .concat(ordem.filter(c => contagem[c]).map(c => ({ label: c, valor: contagem[c] })));
+  container.innerHTML = stats.map(s => `
+    <div class="stat"><strong>${s.valor}</strong><span>${s.label}</span></div>
+  `).join("");
+  document.getElementById("map-cta-text").textContent =
+    `Para explorar as ${DATA.estudo_caso.total_tabelas} tabelas físicas, colunas, lineage e relações deste piloto interativamente:`;
+}
+
 function setupScrollSpy() {
   const links = document.querySelectorAll("nav.section-nav a");
   const sections = Array.from(links).map(link => document.querySelector(link.getAttribute("href")));
@@ -549,5 +656,7 @@ function setupScrollSpy() {
 
 renderSubGrid();
 setupFilters();
+renderProdutos();
+renderStats();
 setupScrollSpy();
 </script>
