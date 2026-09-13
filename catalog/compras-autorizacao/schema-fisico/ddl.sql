@@ -147,7 +147,7 @@ CREATE TABLE bronze_purchases__credit_transaction (
   installment_number INTEGER NOT NULL,
   installment_amount REAL NOT NULL,
   installment_interest_rate REAL,
-  transaction_type_id TEXT NOT NULL
+  transaction_type_id TEXT NOT NULL REFERENCES bronze_purchases__credit_transaction_type(transaction_type_id)
 );
 
 CREATE TABLE bronze_purchases__credit_transaction_type (
@@ -212,7 +212,7 @@ CREATE TABLE silver_purchases__credit_transaction (
   installment_number INTEGER NOT NULL,
   installment_amount REAL NOT NULL,
   installment_interest_rate REAL,
-  transaction_type_id TEXT NOT NULL
+  transaction_type_id TEXT NOT NULL REFERENCES silver_purchases__credit_transaction_type(transaction_type_id)
 );
 
 CREATE TABLE silver_purchases__credit_transaction_type (
@@ -233,13 +233,12 @@ CREATE TABLE gold_integration__purchase_journey (
   merchant_category_code TEXT NOT NULL,
   channel TEXT NOT NULL,
   installments INTEGER,
-  reversal_amount REAL,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
 
 CREATE TABLE gold_analytics__extrato_cliente (
-  purchase_id TEXT NOT NULL PRIMARY KEY,
+  purchase_id TEXT NOT NULL PRIMARY KEY REFERENCES gold_integration__purchase_journey(purchase_id),
   customer_id TEXT NOT NULL,
   amount REAL NOT NULL,
   status TEXT NOT NULL,
@@ -286,7 +285,7 @@ CREATE TABLE gold_analytics__adocao_parcelamento (
 );
 
 CREATE TABLE gold_analytics__latencia_liquidacao_compra (
-  purchase_id TEXT NOT NULL PRIMARY KEY,
+  purchase_id TEXT NOT NULL PRIMARY KEY REFERENCES gold_integration__purchase_journey(purchase_id),
   approved_timestamp TEXT NOT NULL,
   clearing_timestamp TEXT,
   processed_timestamp TEXT NOT NULL,
@@ -300,14 +299,14 @@ CREATE TABLE gold_analytics__mix_canal (
 );
 
 CREATE TABLE gold_analytics__gasto_internacional (
-  purchase_id TEXT NOT NULL PRIMARY KEY,
+  purchase_id TEXT NOT NULL PRIMARY KEY REFERENCES gold_integration__purchase_journey(purchase_id),
   amount_usd REAL NOT NULL,
   amount_brl REAL NOT NULL,
   exchange_rate REAL NOT NULL
 );
 
 CREATE TABLE gold_analytics__gasto_elegivel_rewards (
-  purchase_id TEXT NOT NULL PRIMARY KEY,
+  purchase_id TEXT NOT NULL PRIMARY KEY REFERENCES gold_integration__purchase_journey(purchase_id),
   customer_id TEXT NOT NULL,
   eligible_amount REAL NOT NULL,
   category TEXT NOT NULL

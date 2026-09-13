@@ -25,10 +25,11 @@ Silver / Gold):
 - **Cartões pontilhados** ("externo — outro subdomínio") = tabelas citadas
   como fonte de lineage mas pertencentes a outro subdomínio, ainda sem schema
   físico neste catálogo.
-- Busca por nome de tabela, três filtros suspensos (multi-seleção, todos
+- Busca por nome de tabela e três filtros suspensos (multi-seleção, todos
   marcados por padrão) — **Camadas**, **Produto de dados** e
-  **Core/Integration/Analytics** — e toggle por tipo de seta e liga/desliga da
-  animação, tudo na barra de ferramentas.
+  **Core/Integration/Analytics** — na barra de ferramentas. Setas de lineage
+  e relacional, e a animação de fluxo, ficam sempre visíveis/ativas (sem
+  toggle).
 
 ## Como Regenerar
 
@@ -65,5 +66,5 @@ relações, arestas de lineage, tabelas externas).
 2. Clique em algumas tabelas, confira colunas/tipos, confira que as setas
    azuis animam.
 3. Teste busca e os filtros suspensos (Camadas, Produto de dados,
-   Core/Integration/Analytics) e o toggle por tipo de seta.
+   Core/Integration/Analytics).
 4. Console do navegador (`F12`) sem erros de JS.

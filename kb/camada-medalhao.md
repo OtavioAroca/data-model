@@ -106,7 +106,7 @@ No piloto:
 gold.integration__purchase_journey
 ```
 
-Cruza `silver_l2.purchases__credit_purchase`, `silver_l2.purchases__debit_purchase`, `silver.purchases__credit_transaction`, `silver.purchases__credit_transaction_type` e `silver_l2.disputes__chargeback` em uma única tabela — grão de compra, com parcelas relacionadas quando existirem — pronta para consumo por Risco, Fraude, Atendimento.
+Cruza `silver_l2.purchases__credit_purchase`, `silver_l2.purchases__debit_purchase`, `silver.purchases__credit_transaction` e `silver.purchases__credit_transaction_type` em uma única tabela — grão de compra, com parcelas relacionadas quando existirem — pronta para consumo por Risco, Fraude, Atendimento.
 
 Outputs de Analytics também são Gold:
 ```

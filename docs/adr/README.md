@@ -23,7 +23,8 @@ supersede o anterior (linkando de volta), preservando o histórico de raciocíni
 | [0003](./0003-fk-e-cardinalidade-explicitas-no-schema-fisico.md) | FK e cardinalidade declaradas explicitamente no schema físico | Superseded por [0005](./0005-fk-sem-cardinalidade-explicita.md) |
 | [0004](./0004-duas-categorias-de-seta-pipeline-vs-relacional.md) | Duas categorias de seta no mapa: pipeline (animada) vs relacional (estática) | Aceito |
 | [0005](./0005-fk-sem-cardinalidade-explicita.md) | Relação estrutural sem cardinalidade explícita | Aceito |
-| [0006](./0006-mapa-sem-outros-subdominios-e-sem-chips-externos.md) | Mapa cobre só a rede de tabelas de Compras/Autorização, sem outros subdomínios nem chips externos | Aceito |
+| [0006](./0006-mapa-sem-outros-subdominios-e-sem-chips-externos.md) | Mapa cobre só a rede de tabelas de Compras/Autorização, sem outros subdomínios nem chips externos | Superseded parcialmente por [0007](./0007-integration-purchase-journey-sem-disputas.md) |
+| [0007](./0007-integration-purchase-journey-sem-disputas.md) | integration_purchase_journey sem estorno/lineage de Disputas | Aceito |
 
 ## Quando criar um novo ADR
 

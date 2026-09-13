@@ -315,7 +315,6 @@ def generate(n: int) -> Dict[str, List[dict]]:
             "merchant_category_code": mcc,
             "channel": channel,
             "installments": silver_l2_row.get("installments"),
-            "reversal_amount": None,  # Disputas não estão mapeadas yet
             "created_at": base_timestamp,
             "updated_at": datetime.utcnow().isoformat() + "Z",
         }
