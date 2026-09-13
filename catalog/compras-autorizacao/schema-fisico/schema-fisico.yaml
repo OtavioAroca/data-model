@@ -440,6 +440,9 @@ tabelas:
         tipo: TEXT
         nullable: false
         descricao: Referência para transaction_type (vista, parcelado_sem_juros, parcelado_com_juros)
+        chave_estrangeira:
+          tabela: bronze.purchases__credit_transaction_type
+          coluna: transaction_type_id
 
   - nome: bronze.purchases__credit_transaction_type
     camada_medalhao: Bronze
@@ -616,6 +619,9 @@ tabelas:
       - nome: transaction_type_id
         tipo: TEXT
         nullable: false
+        chave_estrangeira:
+          tabela: silver.purchases__credit_transaction_type
+          coluna: transaction_type_id
 
   - nome: silver.purchases__credit_transaction_type
     camada_medalhao: Silver
@@ -689,6 +695,9 @@ tabelas:
         tipo: TEXT
         nullable: false
         chave_primaria: true
+        chave_estrangeira:
+          tabela: gold.integration__purchase_journey
+          coluna: purchase_id
       - nome: customer_id
         tipo: TEXT
         nullable: false
@@ -804,6 +813,9 @@ tabelas:
         tipo: TEXT
         nullable: false
         chave_primaria: true
+        chave_estrangeira:
+          tabela: gold.integration__purchase_journey
+          coluna: purchase_id
       - nome: approved_timestamp
         tipo: TEXT
         nullable: false
@@ -838,6 +850,9 @@ tabelas:
         tipo: TEXT
         nullable: false
         chave_primaria: true
+        chave_estrangeira:
+          tabela: gold.integration__purchase_journey
+          coluna: purchase_id
       - nome: amount_usd
         tipo: REAL
         nullable: false
@@ -855,6 +870,9 @@ tabelas:
         tipo: TEXT
         nullable: false
         chave_primaria: true
+        chave_estrangeira:
+          tabela: gold.integration__purchase_journey
+          coluna: purchase_id
       - nome: customer_id
         tipo: TEXT
         nullable: false

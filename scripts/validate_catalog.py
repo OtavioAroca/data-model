@@ -32,6 +32,7 @@ def main():
     catalog_schema = load_schema("catalog")
     mapeamento_schema = load_schema("mapeamento-tecnico")
     index_schema = load_schema("index")
+    schema_fisico_schema = load_schema("schema-fisico")
 
     # Validar index.yaml
     print("Validando catalog/index.yaml...", end=" ")
@@ -136,6 +137,43 @@ def main():
             else:
                 print("✗")
                 errors.append(f"catalog/{slug}/mapeamento-tecnico.yaml: {err}")
+
+        # Validar schema-fisico/schema-fisico.yaml se existir
+        schema_fisico_file = subdir / "schema-fisico" / "schema-fisico.yaml"
+        if schema_fisico_file.exists():
+            print(f"Validando catalog/{slug}/schema-fisico/schema-fisico.yaml...", end=" ")
+            valid, err = validate_file(schema_fisico_file, schema_fisico_schema)
+            if valid:
+                print("✓")
+
+                with open(schema_fisico_file) as f:
+                    schema_fisico_data = yaml.safe_load(f)
+
+                tabelas_por_nome = {t["nome"]: t for t in schema_fisico_data.get("tabelas", [])}
+
+                for tabela in schema_fisico_data.get("tabelas", []):
+                    for col in tabela.get("colunas", []):
+                        fk = col.get("chave_estrangeira")
+                        if not fk:
+                            continue
+
+                        prefixo = f"catalog/{slug}/schema-fisico/schema-fisico.yaml: {tabela['nome']}.{col['nome']} (chave_estrangeira)"
+                        tabela_ref = tabelas_por_nome.get(fk["tabela"])
+
+                        if tabela_ref is None:
+                            errors.append(f"{prefixo}: tabela referenciada '{fk['tabela']}' não existe neste schema-fisico.yaml")
+                            continue
+
+                        col_ref = next((c for c in tabela_ref.get("colunas", []) if c["nome"] == fk["coluna"]), None)
+                        if col_ref is None:
+                            errors.append(f"{prefixo}: coluna referenciada '{fk['tabela']}.{fk['coluna']}' não existe")
+                            continue
+
+                        if not col_ref.get("chave_primaria"):
+                            errors.append(f"{prefixo}: coluna referenciada '{fk['tabela']}.{fk['coluna']}' não é chave_primaria")
+            else:
+                print("✗")
+                errors.append(f"catalog/{slug}/schema-fisico/schema-fisico.yaml: {err}")
 
         # Checar correspondência com index.yaml
         if index_has_mapeamento[slug]:
