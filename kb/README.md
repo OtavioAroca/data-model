@@ -4,6 +4,7 @@
 
 | Conceito | O que é | Arquivo |
 |----------|---------|---------|
+| **Produto de Dados** | O que diferencia um dataset governado (dono, contrato, consumidores) de uma tabela qualquer no lake | [produto-de-dados.md](./produto-de-dados.md) |
 | **DDD (Domain-Driven Design)** | Classificação dos subdomínios do negócio por importância estratégica (Core, Support, Generic) e conceitos compartilhados entre time técnico e negócio | [ddd.md](./ddd.md) |
 | **Camada Medalhão** | Estágios de processamento de dados (Bronze, Silver, Gold) com a nuance Silver L1 vs L2 descoberta no piloto | [camada-medalhao.md](./camada-medalhao.md) |
 | **Core / Integration / Analytics** | Classificação dos produtos de dados por escopo (quantos bounded contexts) e público-alvo | [core-integration-analytics.md](./core-integration-analytics.md) |
@@ -31,4 +32,6 @@ Não são mutuamente dependentes — um `Core` subdomínio (DDD) pode gerar prod
 
 ## Próximos passos
 
-Leia os tópicos na ordem que preferir. Se está vindo do catálogo ([`catalog/`](../catalog/README.md)), comece por [camada-medalhao.md](./camada-medalhao.md) se tem dúvida sobre `bronze`/`silver`/`gold`, ou [ddd.md](./ddd.md) se quer entender subdomínios.
+Se você ainda não sabe o que é "um produto de dados", comece por [produto-de-dados.md](./produto-de-dados.md) — os outros arquivos assumem esse conceito.
+
+Depois, leia os demais tópicos na ordem que preferir. Se está vindo do catálogo ([`catalog/`](../catalog/README.md)), continue por [camada-medalhao.md](./camada-medalhao.md) se tem dúvida sobre `bronze`/`silver`/`gold`, ou [ddd.md](./ddd.md) se quer entender subdomínios.
