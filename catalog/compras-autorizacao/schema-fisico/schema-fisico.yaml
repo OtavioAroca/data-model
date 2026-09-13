@@ -676,10 +676,6 @@ tabelas:
       - nome: installments
         tipo: INTEGER
         nullable: true
-      - nome: reversal_amount
-        tipo: REAL
-        nullable: true
-        descricao: Valor de estorno (disputas)
       - nome: created_at
         tipo: TEXT
         nullable: false

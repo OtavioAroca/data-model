@@ -79,10 +79,7 @@
     border-radius: 6px;
     min-width: 200px;
   }
-  .toolbar label { display: flex; align-items: center; gap: 4px; color: var(--text-muted); font-size: 12px; white-space: nowrap; }
-  .toolbar .group { display: flex; gap: 8px; align-items: center; padding: 0 10px; border-left: 1px solid var(--border); }
   .toolbar button.reset { border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
-  .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 
   .filters { display: flex; gap: 8px; align-items: center; }
   .dropdown { position: relative; }
@@ -158,12 +155,6 @@
     <input type="search" id="search-input" placeholder="Buscar tabela…" />
 
     <div class="filters" id="filters"></div>
-
-    <div class="group">
-      <label><input type="checkbox" id="toggle-lineage" checked /> <span class="legend-dot" style="background:var(--edge-lineage)"></span> Pipeline (lineage)</label>
-      <label><input type="checkbox" id="toggle-relacional" checked /> <span class="legend-dot" style="background:var(--edge-relacional)"></span> Relacional (FK)</label>
-      <label><input type="checkbox" id="toggle-animacao" checked /> Animar fluxo</label>
-    </div>
 
     <button class="reset" id="reset-view">Centralizar</button>
   </div>
@@ -1481,12 +1472,6 @@ const DATA = {
               "nullable": true
             },
             {
-              "nome": "reversal_amount",
-              "tipo": "REAL",
-              "nullable": true,
-              "descricao": "Valor de estorno (disputas)"
-            },
-            {
               "nome": "created_at",
               "tipo": "TEXT",
               "nullable": false
@@ -1501,8 +1486,7 @@ const DATA = {
             "silver_l2.purchases__credit_purchase",
             "silver_l2.purchases__debit_purchase",
             "silver.purchases__credit_transaction",
-            "silver.purchases__credit_transaction_type",
-            "silver_l2.disputes__chargeback"
+            "silver.purchases__credit_transaction_type"
           ],
           "lineage_downstream": [
             "gold.analytics__extrato_cliente",
@@ -1926,9 +1910,7 @@ const DATA = {
           "lineage_downstream": []
         }
       ],
-      "tabelas_externas_lineage": [
-        "silver_l2.disputes__chargeback"
-      ],
+      "tabelas_externas_lineage": [],
       "relacoes": [
         {
           "tabela_origem": "bronze.purchases__credit_transaction",
@@ -2022,8 +2004,6 @@ let searchTerm = "";
 let activeLayers = new Set();
 let activeProdutos = new Set();
 let activeCamadasProduto = new Set();
-let showLineage = true;
-let showRelacional = true;
 
 let view = { x: 0, y: 0, k: 1 };
 
@@ -2152,7 +2132,6 @@ function nodeMatchesSearch(n) {
 
 function renderLineageEdges() {
   const g = el("g", { id: "lineage-edges" });
-  if (!showLineage) { rootG.appendChild(g); return; }
   let i = 0;
   for (const t of mapa.tabelas) {
     for (const upstream of t.lineage_upstream) {
@@ -2176,7 +2155,6 @@ function renderLineageEdges() {
 
 function renderRelationalEdges() {
   const g = el("g", { id: "relational-edges" });
-  if (!showRelacional) { rootG.appendChild(g); return; }
   for (const r of mapa.relacoes) {
     if (!edgeVisible(r.tabela_origem, r.tabela_destino)) continue;
     const a = nodeById[r.tabela_origem], b = nodeById[r.tabela_destino];
@@ -2400,13 +2378,6 @@ function montarFiltros() {
 document.getElementById("search-input").addEventListener("input", (e) => {
   searchTerm = e.target.value.trim().toLowerCase();
   render();
-});
-document.getElementById("toggle-lineage").addEventListener("change", (e) => { showLineage = e.target.checked; render(); });
-document.getElementById("toggle-relacional").addEventListener("change", (e) => { showRelacional = e.target.checked; render(); });
-document.getElementById("toggle-animacao").addEventListener("change", (e) => {
-  document.getElementById("canvas-wrap").classList.toggle("no-anim", !e.target.checked);
-  svg.querySelectorAll(".dashflow").forEach(p => p.style.animationPlayState = e.target.checked ? "running" : "paused");
-  svg.querySelectorAll("animateMotion").forEach(a => e.target.checked ? a.beginElement && a.beginElement() : a.endElement && a.endElement());
 });
 document.getElementById("reset-view").addEventListener("click", centerView);
 

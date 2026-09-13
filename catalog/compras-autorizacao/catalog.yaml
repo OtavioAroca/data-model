@@ -32,8 +32,7 @@ produtos:
 - camada: Integration
   nome: integration_purchase_journey
   descricao: Une purchase de crédito e débito (schema padronizado) com o detalhamento
-    de parcelas do crédito e o estorno vindo de Disputas — grão de compra, com parcelas
-    relacionadas quando existirem
+    de parcelas do crédito — grão de compra, com parcelas relacionadas quando existirem
   consumidores:
   - Risco
   - fraude

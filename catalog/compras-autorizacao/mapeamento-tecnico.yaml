@@ -197,7 +197,6 @@ tabelas_fisicas:
   - silver_l2.purchases__debit_purchase
   - silver.purchases__credit_transaction
   - silver.purchases__credit_transaction_type
-  - silver_l2.disputes__chargeback
 - produto: analytics_extrato_cliente
   camada_produto: Analytics
   tabela_fisica: gold.analytics__extrato_cliente
