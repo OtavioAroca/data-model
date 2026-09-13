@@ -32,6 +32,17 @@ def load_yaml(path):
         return yaml.safe_load(f)
 
 
+def load_camadas_produto(slug):
+    """Camadas (Core/Integration/Analytics) com produto proposto no catalog.yaml do subdomínio."""
+    catalog_path = CATALOG_DIR / slug / "catalog.yaml"
+    if not catalog_path.exists():
+        return []
+    catalog = load_yaml(catalog_path)
+    camadas = {p["camada"] for p in catalog.get("produtos", [])}
+    ordem = ["Core", "Integration", "Analytics"]
+    return [c for c in ordem if c in camadas]
+
+
 def build_data():
     index_data = load_yaml(CATALOG_DIR / "index.yaml")
 
@@ -43,6 +54,7 @@ def build_data():
             "sistemas_origem": sub["sistemas_origem"],
             "tipo_ddd": sub["tipo_ddd"],
             "tem_mapeamento_tecnico": sub.get("tem_mapeamento_tecnico", False),
+            "camadas_produto": load_camadas_produto(sub["slug"]),
         }
         for sub in index_data["subdominios"]
     ]
