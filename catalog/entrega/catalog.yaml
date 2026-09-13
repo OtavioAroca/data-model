@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=../_schema/catalog.schema.json
+subdominio:
+  nome: Entrega
+  bounded_context: Rastreia a entrega física do cartão, do despacho até a confirmação
+    de recebimento
+  sistemas_origem: Integração com transportadora/Correios
+  tipo_ddd: Support
+produtos:
+- camada: Core
+  nome: core_delivery_tracking
+  descricao: Eventos de rastreio (despachado, em trânsito, entregue, tentativa falha)
+    por transportadora
+  consumidores:
+  - Atendimento
+  - emissão
+  - Time de Performance
+  dono: Time de Logística
+  status: V0 — a validar
+- camada: Integration
+  nome: integration_card_delivery
+  descricao: Cruza o rastreio de entrega com o ciclo de vida do cartão (emissão →
+    entrega → ativação)
+  consumidores:
+  - Emissão
+  - onboarding
+  - Time de Performance
+  dono: Time de Logística
+  status: V0 — a validar
+- camada: Analytics
+  nome: analytics_delivery_sla
+  descricao: Tempo médio de entrega e taxa de insucesso por transportadora e região
+  consumidores:
+  - Operações
+  - atendimento
+  - Time de Performance
+  dono: Time de Logística
+  status: V0 — a validar

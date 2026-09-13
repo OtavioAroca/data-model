@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=../_schema/catalog.schema.json
+subdominio:
+  nome: Cartão
+  bounded_context: 'Gerencia o ciclo de vida do plástico/virtual: emissão, ativação,
+    bloqueio, reemissão'
+  sistemas_origem: Sistema de emissão de cartões
+  tipo_ddd: Core
+produtos:
+- camada: Core
+  nome: core_card_lifecycle
+  descricao: Eventos de emissão, ativação, bloqueio, reemissão e cancelamento do plástico/virtual
+  consumidores:
+  - Atendimento
+  - fraude
+  - onboarding
+  - Time de Performance
+  dono: Time de Emissão
+  status: V0 — a validar
+- camada: Analytics
+  nome: analytics_card_activation
+  descricao: Tempo até ativação e taxa de ativação por canal de entrega
+  consumidores:
+  - Produto
+  - operações
+  - Time de Performance
+  dono: Time de Emissão
+  status: V0 — a validar

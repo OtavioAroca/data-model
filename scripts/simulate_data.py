@@ -8,12 +8,12 @@ import yaml
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
-CATALOGO_DIR = REPO_ROOT / "catalogo"
+CATALOG_DIR = REPO_ROOT / "catalog"
 
 def load_simulator(subdominio_slug):
-    """Importa dynamicamente catalogo/<slug>/schema-fisico/simulate.py"""
+    """Importa dynamicamente catalog/<slug>/schema-fisico/simulate.py"""
 
-    simulate_file = CATALOGO_DIR / subdominio_slug / "schema-fisico" / "simulate.py"
+    simulate_file = CATALOG_DIR / subdominio_slug / "schema-fisico" / "simulate.py"
     if not simulate_file.exists():
         print(f"Erro: {simulate_file} não encontrado", file=sys.stderr)
         sys.exit(1)
@@ -31,7 +31,7 @@ def load_simulator(subdominio_slug):
 def load_schema(subdominio_slug):
     """Carrega schema-fisico.yaml e retorna mapa de colunas por tabela"""
 
-    schema_file = CATALOGO_DIR / subdominio_slug / "schema-fisico" / "schema-fisico.yaml"
+    schema_file = CATALOG_DIR / subdominio_slug / "schema-fisico" / "schema-fisico.yaml"
     if not schema_file.exists():
         return {}
 
@@ -50,7 +50,7 @@ def load_schema(subdominio_slug):
 def create_database(subdominio_slug, db_file):
     """Cria banco a partir do DDL gerado"""
 
-    ddl_file = CATALOGO_DIR / subdominio_slug / "schema-fisico" / "ddl.sql"
+    ddl_file = CATALOG_DIR / subdominio_slug / "schema-fisico" / "ddl.sql"
     if not ddl_file.exists():
         print(f"Erro: {ddl_file} não encontrado (rode ddl_generator.py primeiro)", file=sys.stderr)
         sys.exit(1)
@@ -129,7 +129,7 @@ def main():
     table_data = simulator.generate(args.n)
 
     # Criar banco
-    db_file = CATALOGO_DIR / args.subdominio / "schema-fisico" / "mock.db"
+    db_file = CATALOG_DIR / args.subdominio / "schema-fisico" / "mock.db"
     print(f"Criando banco: {db_file}")
     conn = create_database(args.subdominio, db_file)
 

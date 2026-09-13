@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=../_schema/catalog.schema.json
+subdominio:
+  nome: Onboarding
+  bounded_context: Conduz a proposta, validação de identidade (KYC) e abertura da
+    conta cartão
+  sistemas_origem: Sistema de proposta, KYC/antifraude cadastral
+  tipo_ddd: Core
+produtos:
+- camada: Core
+  nome: core_card_application
+  descricao: Dados da proposta e etapas do funil de abertura de conta
+  consumidores:
+  - Integration de onboarding
+  - auditoria
+  - Time de Performance
+  dono: Time de Onboarding
+  status: V0 — a validar
+- camada: Core
+  nome: core_kyc_validation
+  descricao: Resultado das validações de identidade e antifraude cadastral
+  consumidores:
+  - Onboarding
+  - compliance
+  - Time de Performance
+  dono: Time de Onboarding
+  status: V0 — a validar
+- camada: Integration
+  nome: integration_onboarding_journey
+  descricao: Une proposta, KYC e elegibilidade em uma linha do tempo única do funil
+  consumidores:
+  - Produto
+  - atendimento
+  - BI
+  - Time de Performance
+  dono: Time de Onboarding
+  status: V0 — a validar
+- camada: Analytics
+  nome: analytics_onboarding_funnel
+  descricao: Taxa de conversão e abandono por etapa do funil de abertura
+  consumidores:
+  - Produto
+  - marketing
+  - Time de Performance
+  dono: Time de Onboarding
+  status: V0 — a validar

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Build script: Gera docs/apresentacao.html a partir dos YAMLs de catálogo e KB.
-Lê: catalogo/index.yaml, catalogo/*/catalogo.yaml, mapeamento-tecnico.yaml,
+Build script: Gera presentation/apresentacao.html a partir dos YAMLs de catálogo e KB.
+Lê: catalog/index.yaml, catalog/*/catalog.yaml, mapeamento-tecnico.yaml,
     schema-fisico.yaml, kb/*.md (conteúdo curado à mão).
-Escreve: docs/apresentacao.html (injetando DATA no template).
+Escreve: presentation/apresentacao.html (injetando DATA no template).
 """
 
 import json
@@ -11,9 +11,9 @@ import yaml
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
-CATALOGO_DIR = REPO_ROOT / "catalogo"
+CATALOG_DIR = REPO_ROOT / "catalog"
 KB_DIR = REPO_ROOT / "kb"
-DOCS_DIR = REPO_ROOT / "docs"
+PRESENTATION_DIR = REPO_ROOT / "presentation"
 
 def load_yaml(path):
     with open(path) as f:
@@ -24,23 +24,23 @@ def load_text(path):
         return f.read()
 
 def build_data():
-    # === Ler catalogo/index.yaml (15 subdomínios) ===
-    index = load_yaml(CATALOGO_DIR / "index.yaml")
+    # === Ler catalog/index.yaml (15 subdomínios) ===
+    index = load_yaml(CATALOG_DIR / "index.yaml")
     subdominios = index["subdominios"]
 
-    # === Enriquecer cada subdomínio com seus produtos (catalogo.yaml) ===
+    # === Enriquecer cada subdomínio com seus produtos (catalog.yaml) ===
     for sub in subdominios:
         slug = sub["slug"]
-        catalogo_yaml = CATALOGO_DIR / slug / "catalogo.yaml"
-        if catalogo_yaml.exists():
-            cat = load_yaml(catalogo_yaml)
+        catalog_yaml = CATALOG_DIR / slug / "catalog.yaml"
+        if catalog_yaml.exists():
+            cat = load_yaml(catalog_yaml)
             sub["produtos"] = cat.get("produtos", [])
         else:
             sub["produtos"] = []
 
     # === Ler compras-autorizacao: mapeamento-tecnico + schema-fisico ===
-    map_tecnico_yaml = CATALOGO_DIR / "compras-autorizacao" / "mapeamento-tecnico.yaml"
-    schema_fisico_yaml = CATALOGO_DIR / "compras-autorizacao" / "schema-fisico" / "schema-fisico.yaml"
+    map_tecnico_yaml = CATALOG_DIR / "compras-autorizacao" / "mapeamento-tecnico.yaml"
+    schema_fisico_yaml = CATALOG_DIR / "compras-autorizacao" / "schema-fisico" / "schema-fisico.yaml"
 
     map_tecnico = load_yaml(map_tecnico_yaml) if map_tecnico_yaml.exists() else {}
     schema_fisico = load_yaml(schema_fisico_yaml) if schema_fisico_yaml.exists() else {}
@@ -143,7 +143,7 @@ def build_data():
     data = {
         "meta": {
             "gerado_em": "build_apresentacao.py",
-            "fonte": "kb/ + catalogo/"
+            "fonte": "kb/ + catalog/"
         },
         "conceitos": conceitos,
         "subdominios": subdominios,
@@ -162,7 +162,7 @@ def main():
     data = build_data()
 
     # === Ler template ===
-    template_path = DOCS_DIR / "apresentacao.template.html"
+    template_path = PRESENTATION_DIR / "apresentacao.template.html"
     if not template_path.exists():
         print(f"❌ Template não encontrado: {template_path}")
         return
@@ -174,7 +174,7 @@ def main():
     output = template.replace("/*__CARTAO_DATA__*/", f"const DATA = {json_str};")
 
     # === Escrever arquivo final ===
-    output_path = DOCS_DIR / "apresentacao.html"
+    output_path = PRESENTATION_DIR / "apresentacao.html"
     output_path.write_text(output, encoding="utf-8")
 
     # === Resumo de verificação ===

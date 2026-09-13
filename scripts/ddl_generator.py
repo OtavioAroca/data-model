@@ -5,12 +5,12 @@ import yaml
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
-CATALOGO_DIR = REPO_ROOT / "catalogo"
+CATALOG_DIR = REPO_ROOT / "catalog"
 
 def generate_ddl(subdominio_slug):
     """Gera DDL SQL a partir de schema-fisico.yaml"""
 
-    schema_file = CATALOGO_DIR / subdominio_slug / "schema-fisico" / "schema-fisico.yaml"
+    schema_file = CATALOG_DIR / subdominio_slug / "schema-fisico" / "schema-fisico.yaml"
     if not schema_file.exists():
         print(f"Erro: {schema_file} não encontrado", file=sys.stderr)
         sys.exit(1)
@@ -72,7 +72,7 @@ def main():
     ddl = generate_ddl(subdominio)
 
     # Salvar em arquivo
-    output_file = CATALOGO_DIR / subdominio / "schema-fisico" / "ddl.sql"
+    output_file = CATALOG_DIR / subdominio / "schema-fisico" / "ddl.sql"
     with open(output_file, "w") as f:
         f.write(ddl)
 
