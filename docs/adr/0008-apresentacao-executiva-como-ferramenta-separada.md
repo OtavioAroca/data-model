@@ -2,14 +2,12 @@
 
 ## Status
 
-Proposto
+Aceito
 
-> Este ADR nasce em rascunho e deve ser **atualizado neste mesmo arquivo**
-> (sem criar um novo ADR a cada revisão) enquanto a apresentação executiva é
-> ajustada, até ser marcado como `Aceito`. É uma pequena extensão da
-> convenção do repositório — os ADRs 0001–0007 só documentam decisões já
-> fechadas; este value `Proposto` é o primeiro caso de um ADR usado para
-> guiar um desenvolvimento em andamento.
+> Nasceu como `Proposto` (o primeiro ADR do repositório usado para guiar um
+> desenvolvimento em andamento, atualizado neste mesmo arquivo em vez de
+> gerar um novo ADR a cada revisão) e foi aceito após aprovação da
+> [PR #9](https://github.com/OtavioAroca/data-model/pull/9).
 
 ## Contexto
 
