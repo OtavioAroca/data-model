@@ -1,0 +1,55 @@
+# yaml-language-server: $schema=./mapeamento-tecnico.schema.json
+# Template: copie este arquivo para catalog/<novo-slug>/mapeamento-tecnico.yaml e adapte
+
+contexto: "Descrição do contexto técnico deste mapeamento (ex: versão, piloto, observações)"
+
+notas:
+  - titulo: "Nota importante 1"
+    texto: "Texto detalhado sobre uma decisão técnica ou pendência importante específica deste piloto"
+  - titulo: "Nota importante 2"
+    texto: "Mais uma observação que não é um conceito genérico"
+
+tabelas_fisicas:
+  # Exemplo: tabela Bronze (staging raw)
+  - produto: "core_exemplo_produto"
+    camada_produto: "Core"
+    tabela_fisica: "bronze.exemplo__evento_tipo1"
+    camada_medalhao: "Bronze"
+    papel: "Tópico raw (staging) — dados brutos de ingesta"
+    pipeline: "Streaming ingestion (platform)"
+    frequencia: "Streaming contínuo"
+    fonte_origem: "Fonte: sistema de origem X, tópico tipo1"  # Só para Bronze (sem tabela física de origem)
+
+  # Exemplo: tabela Silver L1 (histórico de eventos)
+  - produto: "core_exemplo_produto"
+    camada_produto: "Core"
+    tabela_fisica: "silver_l1.exemplo__produto"
+    camada_medalhao: "Silver L1"
+    papel: "Histórico de eventos (append-only, N linhas por chave)"
+    pipeline: "pipeline_core_exemplo_produto"
+    frequencia: "Incremental: aprovação em minutos, status final em D+1"
+    lineage:
+      - "bronze.exemplo__evento_tipo1"
+
+  # Exemplo: tabela Silver L2 (estado atual materializado)
+  - produto: "core_exemplo_produto"
+    camada_produto: "Core"
+    tabela_fisica: "silver_l2.exemplo__produto"
+    camada_medalhao: "Silver L2"
+    papel: "Interface exposta do produto — estado atual (1 linha por chave)"
+    pipeline: "pipeline_core_exemplo_produto"
+    frequencia: "Incremental: aprovação em minutos, status final em D+1"
+    lineage:
+      - "silver_l1.exemplo__produto"
+
+  # Exemplo: tabela Gold (pronto para consumo)
+  - produto: "analytics_exemplo_kpi"
+    camada_produto: "Analytics"
+    tabela_fisica: "gold.analytics__exemplo_kpi"
+    camada_medalhao: "Gold"
+    papel: "Interface exposta do produto — KPI pronto para dashboard"
+    pipeline: "pipeline_analytics_exemplo_kpi"
+    frequencia: "Batch diário"
+    lineage:
+      - "silver_l2.exemplo__produto"
+      - "silver.dimensao__tempo"

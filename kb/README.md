@@ -31,4 +31,4 @@ Não são mutuamente dependentes — um `Core` subdomínio (DDD) pode gerar prod
 
 ## Próximos passos
 
-Leia os tópicos na ordem que preferir. Se está vindo do catálogo ([`catalogo/`](../catalogo/README.md)), comece por [camada-medalhao.md](./camada-medalhao.md) se tem dúvida sobre `bronze`/`silver`/`gold`, ou [ddd.md](./ddd.md) se quer entender subdomínios.
+Leia os tópicos na ordem que preferir. Se está vindo do catálogo ([`catalog/`](../catalog/README.md)), comece por [camada-medalhao.md](./camada-medalhao.md) se tem dúvida sobre `bronze`/`silver`/`gold`, ou [ddd.md](./ddd.md) se quer entender subdomínios.

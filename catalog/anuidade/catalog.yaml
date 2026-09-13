@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=../_schema/catalog.schema.json
+subdominio:
+  nome: Anuidade
+  bounded_context: Calcula, cobra e administra isenções/negociação da anuidade do
+    cartão
+  sistemas_origem: Motor de anuidade (regras de isenção e negociação)
+  tipo_ddd: Support
+produtos:
+- camada: Core
+  nome: core_annual_fee_rule
+  descricao: Regras de cálculo, isenção por gasto mínimo e negociação de anuidade
+    aplicadas à conta
+  consumidores:
+  - Fatura
+  - atendimento
+  - Time de Performance
+  dono: Time de Anuidade
+  status: V0 — a validar
+- camada: Integration
+  nome: integration_annual_fee_statement
+  descricao: Cruza a decisão de anuidade (cobrar, isentar, parcelar) com a fatura
+    onde ela é lançada
+  consumidores:
+  - Faturamento
+  - financeiro
+  - Time de Performance
+  dono: Time de Anuidade
+  status: V0 — a validar
+- camada: Analytics
+  nome: analytics_annual_fee_waiver
+  descricao: Taxa de isenção concedida e seu impacto em receita, por segmento de cliente
+  consumidores:
+  - Financeiro
+  - marketing/retenção
+  - Time de Performance
+  dono: Time de Anuidade
+  status: V0 — a validar

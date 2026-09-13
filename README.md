@@ -7,16 +7,16 @@ O objetivo é servir de ponto de partida para conversas com os times de domínio
 ## Estrutura do repositório
 
 ```
-catalogo/            Catálogo de produtos de dados por subdomínio (15 subdomínios do domínio Cartão)
-├── _schema/         Contratos JSON Schema + templates para catalogo/mapeamento-tecnico/schema-fisico
+catalog/            Catálogo de produtos de dados por subdomínio (15 subdomínios do domínio Cartão)
+├── _schema/         Contratos JSON Schema + templates para catalog/mapeamento-tecnico/schema-fisico
 ├── index.yaml        Índice dos 15 subdomínios
 └── <slug>/           Um por subdomínio (ex: compras-autorizacao, fatura, limite...)
-    ├── catalogo.md/yaml            Produtos de dados propostos (Core/Integration/Analytics)
+    ├── catalog.md/yaml            Produtos de dados propostos (Core/Integration/Analytics)
     ├── mapeamento-tecnico.md/yaml  Mapeamento produto → tabela física, pipeline, lineage (quando disponível)
     └── schema-fisico/               DDL, colunas, simulação de dados e banco mock (quando disponível)
 
 kb/                  Base de conhecimento com os conceitos fundamentais (DDD, Camada Medalhão, Core/Integration/Analytics)
-docs/                Apresentação interativa (HTML, offline, zero build) gerada a partir do catálogo
+presentation/                Apresentação interativa (HTML, offline, zero build) gerada a partir do catálogo
 scripts/             Scripts Python de build, validação, geração de DDL e simulação de dados
 ```
 
@@ -25,9 +25,9 @@ Hoje, **Compras/Autorização** é o único subdomínio com mapeamento técnico 
 ## Por onde começar
 
 - **Entender os conceitos**: [`kb/README.md`](kb/README.md)
-- **Ver o catálogo e como usá-lo**: [`catalogo/README.md`](catalogo/README.md)
-- **Adicionar/validar um subdomínio, mapeamento técnico ou schema físico**: [`catalogo/_schema/README.md`](catalogo/_schema/README.md)
-- **Ver a apresentação interativa**: [`docs/README.md`](docs/README.md)
+- **Ver o catálogo e como usá-lo**: [`catalog/README.md`](catalog/README.md)
+- **Adicionar/validar um subdomínio, mapeamento técnico ou schema físico**: [`catalog/_schema/README.md`](catalog/_schema/README.md)
+- **Ver a apresentação interativa**: [`presentation/README.md`](presentation/README.md)
 
 ## Setup
 
@@ -39,7 +39,7 @@ pip install -r requirements.txt
 
 ```bash
 # Validar todo o catálogo contra o contrato (schemas)
-python3 scripts/validate_catalogo.py
+python3 scripts/validate_catalog.py
 
 # Gerar DDL SQL a partir de um schema-fisico.yaml
 python3 scripts/ddl_generator.py <slug>
@@ -47,7 +47,7 @@ python3 scripts/ddl_generator.py <slug>
 # Popular um mock.db (SQLite) com dados simulados
 python3 scripts/simulate_data.py --subdominio <slug> --n 50
 
-# Regenerar a apresentação interativa (docs/apresentacao.html)
+# Regenerar a apresentação interativa (presentation/apresentacao.html)
 python3 scripts/build_apresentacao.py
 ```
 
@@ -55,4 +55,4 @@ python3 scripts/build_apresentacao.py
 
 Elegibilidade, Onboarding, Conta Cartão, Cartão, Limite, Compras/Autorização, Fatura, Pagamento da Fatura, Disputas/Chargeback, Fraude, Cobrança, Benefícios/Rewards, Encerramento, Anuidade, Entrega.
 
-Detalhes de cada um (o que resolve, sistemas de origem, tipo DDD) em [`catalogo/README.md`](catalogo/README.md#subdomínios).
+Detalhes de cada um (o que resolve, sistemas de origem, tipo DDD) em [`catalog/README.md`](catalog/README.md#subdomínios).

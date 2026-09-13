@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Catálogo de Produtos de Dados — Contrato de Subdomínio",
+  "description": "Define a estrutura esperada de catalog/<slug>/catalog.yaml",
+  "type": "object",
+  "required": ["subdominio", "produtos"],
+  "properties": {
+    "subdominio": {
+      "type": "object",
+      "required": ["nome", "bounded_context", "sistemas_origem", "tipo_ddd"],
+      "properties": {
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Nome do subdomínio (ex: Elegibilidade, Compras / Autorização)"
+        },
+        "bounded_context": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Descrição do bounded context — o que o subdomínio resolve"
+        },
+        "sistemas_origem": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Sistemas que alimentam este subdomínio"
+        },
+        "tipo_ddd": {
+          "type": "string",
+          "enum": ["Core", "Support", "Generic"],
+          "description": "Classificação estratégica do subdomínio (DDD)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "produtos": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Lista de produtos de dados deste subdomínio",
+      "items": {
+        "type": "object",
+        "required": ["camada", "nome", "descricao", "consumidores", "dono", "status"],
+        "properties": {
+          "camada": {
+            "type": "string",
+            "enum": ["Core", "Integration", "Analytics"],
+            "description": "Camada do produto (Core: 1 bounded context, Integration: >1, Analytics: caso de uso)"
+          },
+          "nome": {
+            "type": "string",
+            "pattern": "^(core_|integration_|analytics_)[a-z0-9_]+$",
+            "minLength": 1,
+            "description": "Nome do produto com prefixo obrigatório: core_, integration_ ou analytics_"
+          },
+          "descricao": {
+            "type": "string",
+            "minLength": 1,
+            "description": "O que o produto faz — descrição clara e concisa"
+          },
+          "consumidores": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Equipes/sistemas que consomem este produto"
+          },
+          "dono": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Time responsável pelo produto"
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Status de validação (ex: 'V0 — a validar', 'V1 — validado')"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
