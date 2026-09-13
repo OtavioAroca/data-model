@@ -1,0 +1,2455 @@
+<meta charset="utf-8" />
+<title>Parque de Dados — Domínio Cartão</title>
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --panel-bg: #ffffff;
+    --text: #1f2328;
+    --text-muted: #6b7280;
+    --border: #e2e2e0;
+    --accent: #2563eb;
+    --layer-bronze: #b45309;
+    --layer-silver-l1: #64748b;
+    --layer-silver-l2: #475569;
+    --layer-silver: #94a3b8;
+    --layer-gold: #ca8a04;
+    --edge-lineage: #2563eb;
+    --edge-relacional: #9333ea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14161a;
+      --panel-bg: #1c1f26;
+      --text: #e6e8eb;
+      --text-muted: #9aa1ac;
+      --border: #2c313a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161a;
+    --panel-bg: #1c1f26;
+    --text: #e6e8eb;
+    --text-muted: #9aa1ac;
+    --border: #2c313a;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  header {
+    flex: 0 0 auto;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  header h1 { font-size: 18px; margin: 0; }
+  header p { margin: 0; color: var(--text-muted); font-size: 13px; }
+
+  #mapa-view {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    grid-template-rows: auto 1fr;
+  }
+
+  .toolbar {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel-bg);
+  }
+  .toolbar input[type="search"] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 6px;
+    min-width: 200px;
+  }
+  .toolbar label { display: flex; align-items: center; gap: 4px; color: var(--text-muted); font-size: 12px; white-space: nowrap; }
+  .toolbar .group { display: flex; gap: 8px; align-items: center; padding: 0 10px; border-left: 1px solid var(--border); }
+  .toolbar button.reset { border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+  .filters { display: flex; gap: 8px; align-items: center; }
+  .dropdown { position: relative; }
+  .dropdown-btn {
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .dropdown-panel {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 20;
+    min-width: 220px;
+    max-height: 280px;
+    overflow-y: auto;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  }
+  .dropdown-panel[hidden] { display: none; }
+  .dropdown-actions { display: flex; gap: 6px; padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .dropdown-actions button { flex: 1; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 6px; padding: 3px 6px; font-size: 11px; cursor: pointer; }
+  .dropdown-option { display: flex; align-items: center; gap: 6px; padding: 3px 2px; font-size: 12px; white-space: nowrap; cursor: pointer; }
+
+  #canvas-wrap { position: relative; overflow: hidden; background: var(--bg); cursor: grab; min-height: 0; }
+  #canvas-wrap.grabbing { cursor: grabbing; }
+  #canvas-wrap svg { width: 100%; height: 100%; display: block; }
+
+  .table-card { fill: var(--panel-bg); stroke: var(--border); stroke-width: 1.5; rx: 8; }
+  .table-card.selected { stroke: var(--accent); stroke-width: 2.5; }
+  .table-card.dimmed { opacity: 0.25; }
+  .table-card.external { fill: transparent; stroke-dasharray: 4 3; opacity: 0.6; }
+  .table-title { font-size: 11px; font-weight: 600; fill: var(--text); pointer-events: none; }
+  .table-sub { font-size: 9.5px; fill: var(--text-muted); pointer-events: none; }
+  .layer-header { font-size: 12px; font-weight: 700; fill: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .edge-lineage { fill: none; stroke: var(--edge-lineage); stroke-width: 2.4; opacity: 0.85; }
+  .edge-lineage.dashflow { stroke-dasharray: 6 6; animation: dashflow 1.1s linear infinite; }
+  .edge-lineage.dimmed { opacity: 0.08; }
+  @keyframes dashflow { to { stroke-dashoffset: -24; } }
+  .edge-relacional { fill: none; stroke: var(--edge-relacional); stroke-width: 1.3; stroke-dasharray: 2 3; opacity: 0.8; }
+  .edge-relacional.dimmed { opacity: 0.06; }
+  .flow-dot { fill: var(--edge-lineage); }
+
+  #side-panel { border-left: 1px solid var(--border); background: var(--panel-bg); overflow-y: auto; padding: 16px; }
+  #side-panel h2 { font-size: 15px; margin: 0 0 2px; }
+  #side-panel .badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 10px; color: #fff; margin-right: 4px; }
+  #side-panel table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+  #side-panel th, #side-panel td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  #side-panel th { color: var(--text-muted); font-weight: 600; font-size: 11px; }
+  #side-panel .pk { color: var(--layer-gold); font-weight: 700; }
+  #side-panel .fk { color: var(--edge-relacional); font-size: 11px; }
+  #side-panel .section-title { margin-top: 14px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-muted); }
+  #side-panel .chips-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  #side-panel .chip-btn { border: 1px solid var(--border); background: var(--bg); color: var(--text); padding: 3px 8px; border-radius: 12px; font-size: 11px; cursor: pointer; }
+  #side-panel .hint { color: var(--text-muted); font-size: 12px; }
+</style>
+
+<header>
+  <h1>Parque de Dados — Domínio Cartão</h1>
+  <p>Mapa gerado a partir de <code>catalog/</code> — tabelas, campos, relações e fluxo de pipeline de Compras/Autorização.</p>
+</header>
+
+<div id="mapa-view">
+  <div class="toolbar">
+    <input type="search" id="search-input" placeholder="Buscar tabela…" />
+
+    <div class="filters" id="filters"></div>
+
+    <div class="group">
+      <label><input type="checkbox" id="toggle-lineage" checked /> <span class="legend-dot" style="background:var(--edge-lineage)"></span> Pipeline (lineage)</label>
+      <label><input type="checkbox" id="toggle-relacional" checked /> <span class="legend-dot" style="background:var(--edge-relacional)"></span> Relacional (FK)</label>
+      <label><input type="checkbox" id="toggle-animacao" checked /> Animar fluxo</label>
+    </div>
+
+    <button class="reset" id="reset-view">Centralizar</button>
+  </div>
+
+  <div id="canvas-wrap">
+    <svg id="canvas-svg"></svg>
+  </div>
+
+  <div id="side-panel">
+    <p class="hint">Clique em uma tabela para ver colunas, tipos, lineage e relações.</p>
+  </div>
+</div>
+
+<script>
+const DATA = {
+  "meta": {
+    "gerado_por": "scripts/build_mapa_parque_dados.py",
+    "fonte": "catalog/"
+  },
+  "mapas_detalhados": [
+    {
+      "slug": "compras-autorizacao",
+      "contexto": "Piloto de mapeamento técnico — subdomínio Compras / Autorização (Core + Integration).",
+      "notas": [
+        {
+          "titulo": "Correção de nomenclatura",
+          "texto": "Os 5 tópicos de status (approved/denied/cancelled/clearing/processed) alimentam a fonte 'purchase' (grão de compra), não 'transaction'. A fonte 'transaction' é outra coisa — só existe em crédito, tópico único, carrega o detalhamento de parcelas (grão de parcela, N por compra). Dentro de 'transaction', o ID da compra vem preenchido na linha da compra e nulo nas linhas de parcela — sugere mistura de cabeçalho e detalhe na mesma fonte, a resolver no desenho de schema físico."
+        },
+        {
+          "titulo": "Pendências de validação",
+          "texto": "(1) A regra de precedência de status em L2 é regra de NEGÓCIO, não dedup técnico por timestamp de chegada — precisa ser definida pelo time de domínio (ex: um cancelled deve sempre prevalecer mesmo chegando depois de um clearing?). (2) Se risco/fraude/atendimento também precisam do histórico completo, além do estado atual — hoje não confirmado. (3) Se débito tem equivalente ao tópico transaction_type do crédito — hoje não confirmado."
+        },
+        {
+          "titulo": "Produto vs. insumo interno",
+          "texto": "Sem consumidor externo confirmado, core_credit_transaction e core_credit_transaction_type não aparecem como linha própria no Catálogo V0 — continuam Core (fonte única, sem cruzamento de domínio), só não são produtos expostos com contrato/SLA próprio; são insumo interno de integration_purchase_journey. Padrão aplicado na dúvida: só expor como produto quando houver evidência real de consumo externo; promover depois se aparecer."
+        }
+      ],
+      "tabelas": [
+        {
+          "nome": "bronze.purchases__credit_approved",
+          "camada_medalhao": "Bronze",
+          "produto": "core_credit_purchase",
+          "camada_produto": "Core",
+          "papel": "Tópico raw (staging)",
+          "pipeline": "Streaming ingestion (platform)",
+          "frequencia": "Streaming contínuo",
+          "fonte_origem": "Fonte: rail de crédito, tópico approved",
+          "colunas": [
+            {
+              "nome": "event_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true,
+              "descricao": "Identificador único do evento"
+            },
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "descricao": "Identificador da compra"
+            },
+            {
+              "nome": "card_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "descricao": "Identificador do cartão"
+            },
+            {
+              "nome": "customer_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "descricao": "Identificador do cliente"
+            },
+            {
+              "nome": "status",
+              "tipo": "TEXT",
+              "nullable": false,
+              "descricao": "Status (approved)"
+            },
+            {
+              "nome": "amount",
+              "tipo": "REAL",
+              "nullable": false,
+              "descricao": "Valor da compra em centavos"
+            },
+            {
+              "nome": "installments",
+              "tipo": "INTEGER",
+              "nullable": true,
+              "descricao": "Número de parcelas (crédito)"
+            },
+            {
+              "nome": "merchant_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "descricao": "Identificador do lojista"
+            },
+            {
+              "nome": "merchant_category_code",
+              "tipo": "TEXT",
+              "nullable": false,
+              "descricao": "MCC do lojista"
+            },
+            {
+              "nome": "channel",
+              "tipo": "TEXT",
+              "nullable": false,
+              "descricao": "Canal da compra (presencial, ecommerce, recorrencia)"
+            },
+            {
+              "nome": "event_timestamp",
+              "tipo": "TEXT",
+              "nullable": false,
+              "descricao": "Timestamp ISO 8601 do evento"
+            },
+            {
+              "nome": "ingest_timestamp",
+              "tipo": "TEXT",
+              "nullable": false,
+              "descricao": "Timestamp de ingestão"
+            }
+          ],
+          "lineage_upstream": [],
+          "lineage_downstream": [
+            "silver_l1.purchases__credit_purchase"
+          ]
+        },
+        {
+          "nome": "bronze.purchases__credit_denied",
+          "camada_medalhao": "Bronze",
+          "produto": "core_credit_purchase",
+          "camada_produto": "Core",
+          "papel": "Tópico raw (staging)",
+          "pipeline": "Streaming ingestion (platform)",
+          "frequencia": "Streaming contínuo",
+          "fonte_origem": "Fonte: rail de crédito, tópico denied",
+          "colunas": [
+            {
+              "nome": "event_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "card_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "customer_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "status",
+              "tipo": "TEXT",
+              "nullable": false,
+              "descricao": "Status (denied)"
+            },
+            {
+              "nome": "amount",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "denial_reason",
+              "tipo": "TEXT",
+              "nullable": false,
+              "descricao": "Motivo da negação (limite, fraude, etc)"
+            },
+            {
+              "nome": "merchant_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_category_code",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "channel",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "event_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "ingest_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [],
+          "lineage_downstream": [
+            "silver_l1.purchases__credit_purchase"
+          ]
+        },
+        {
+          "nome": "bronze.purchases__credit_cancelled",
+          "camada_medalhao": "Bronze",
+          "produto": "core_credit_purchase",
+          "camada_produto": "Core",
+          "papel": "Tópico raw (staging)",
+          "pipeline": "Streaming ingestion (platform)",
+          "frequencia": "Streaming contínuo",
+          "fonte_origem": "Fonte: rail de crédito, tópico cancelled",
+          "colunas": [
+            {
+              "nome": "event_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "card_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "customer_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "status",
+              "tipo": "TEXT",
+              "nullable": false,
+              "descricao": "Status (cancelled)"
+            },
+            {
+              "nome": "amount",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "cancellation_reason",
+              "tipo": "TEXT",
+              "nullable": true,
+              "descricao": "Motivo do cancelamento"
+            },
+            {
+              "nome": "merchant_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_category_code",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "channel",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "event_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "ingest_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [],
+          "lineage_downstream": [
+            "silver_l1.purchases__credit_purchase"
+          ]
+        },
+        {
+          "nome": "bronze.purchases__credit_clearing",
+          "camada_medalhao": "Bronze",
+          "produto": "core_credit_purchase",
+          "camada_produto": "Core",
+          "papel": "Tópico raw (staging)",
+          "pipeline": "Streaming ingestion (platform)",
+          "frequencia": "Streaming contínuo",
+          "fonte_origem": "Fonte: rail de crédito, tópico clearing",
+          "colunas": [
+            {
+              "nome": "event_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "card_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "customer_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "status",
+              "tipo": "TEXT",
+              "nullable": false,
+              "descricao": "Status (clearing)"
+            },
+            {
+              "nome": "amount",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_category_code",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "event_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "ingest_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [],
+          "lineage_downstream": [
+            "silver_l1.purchases__credit_purchase"
+          ]
+        },
+        {
+          "nome": "bronze.purchases__credit_processed",
+          "camada_medalhao": "Bronze",
+          "produto": "core_credit_purchase",
+          "camada_produto": "Core",
+          "papel": "Tópico raw (staging)",
+          "pipeline": "Streaming ingestion (platform)",
+          "frequencia": "Streaming contínuo",
+          "fonte_origem": "Fonte: rail de crédito, tópico processed",
+          "colunas": [
+            {
+              "nome": "event_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "card_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "customer_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "status",
+              "tipo": "TEXT",
+              "nullable": false,
+              "descricao": "Status (processed)"
+            },
+            {
+              "nome": "amount",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_category_code",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "network_fee",
+              "tipo": "REAL",
+              "nullable": true,
+              "descricao": "Taxa de processamento da rede"
+            },
+            {
+              "nome": "event_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "ingest_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [],
+          "lineage_downstream": [
+            "silver_l1.purchases__credit_purchase"
+          ]
+        },
+        {
+          "nome": "silver_l1.purchases__credit_purchase",
+          "camada_medalhao": "Silver L1",
+          "produto": "core_credit_purchase",
+          "camada_produto": "Core",
+          "papel": "Histórico de eventos de status (append-only, N linhas por compra)",
+          "pipeline": "pipeline_core_purchases_credit_purchase",
+          "frequencia": "Incremental: aprovação em minutos, status final (processed) em D+1",
+          "fonte_origem": "",
+          "colunas": [
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "event_sequence",
+              "tipo": "INTEGER",
+              "nullable": false,
+              "descricao": "Sequência do evento"
+            },
+            {
+              "nome": "status",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "event_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "card_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "customer_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "amount",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "processed_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [
+            "bronze.purchases__credit_approved",
+            "bronze.purchases__credit_denied",
+            "bronze.purchases__credit_cancelled",
+            "bronze.purchases__credit_clearing",
+            "bronze.purchases__credit_processed"
+          ],
+          "lineage_downstream": [
+            "silver_l2.purchases__credit_purchase",
+            "gold.analytics__latencia_liquidacao_compra"
+          ]
+        },
+        {
+          "nome": "silver_l2.purchases__credit_purchase",
+          "camada_medalhao": "Silver L2",
+          "produto": "core_credit_purchase",
+          "camada_produto": "Core",
+          "papel": "Interface exposta do produto — estado atual via regra de precedência de status (regra de negócio, não dedup técnico) — 1 linha por compra",
+          "pipeline": "pipeline_core_purchases_credit_purchase",
+          "frequencia": "Incremental: aprovação em minutos, status final (processed) em D+1",
+          "fonte_origem": "",
+          "colunas": [
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "status",
+              "tipo": "TEXT",
+              "nullable": false,
+              "descricao": "Status final (após regra de precedência)"
+            },
+            {
+              "nome": "status_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "card_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "customer_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "amount",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_category_code",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "channel",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "event_count",
+              "tipo": "INTEGER",
+              "nullable": false,
+              "descricao": "Total de eventos até o status final"
+            }
+          ],
+          "lineage_upstream": [
+            "silver_l1.purchases__credit_purchase"
+          ],
+          "lineage_downstream": [
+            "gold.integration__purchase_journey",
+            "gold.analytics__taxa_aprovacao_compra",
+            "gold.analytics__motivos_negacao_compra"
+          ]
+        },
+        {
+          "nome": "bronze.purchases__debit_approved",
+          "camada_medalhao": "Bronze",
+          "produto": "core_debit_purchase",
+          "camada_produto": "Core",
+          "papel": "Tópico raw (staging)",
+          "pipeline": "Streaming ingestion (platform)",
+          "frequencia": "Streaming contínuo",
+          "fonte_origem": "Fonte: rail de débito, tópico approved",
+          "colunas": [
+            {
+              "nome": "event_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "card_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "customer_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "status",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "amount",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_category_code",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "channel",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "event_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "ingest_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [],
+          "lineage_downstream": [
+            "silver_l1.purchases__debit_purchase"
+          ]
+        },
+        {
+          "nome": "bronze.purchases__debit_denied",
+          "camada_medalhao": "Bronze",
+          "produto": "core_debit_purchase",
+          "camada_produto": "Core",
+          "papel": "Tópico raw (staging)",
+          "pipeline": "Streaming ingestion (platform)",
+          "frequencia": "Streaming contínuo",
+          "fonte_origem": "Fonte: rail de débito, tópico denied",
+          "colunas": [
+            {
+              "nome": "event_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "card_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "customer_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "status",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "amount",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "denial_reason",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_category_code",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "channel",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "event_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "ingest_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [],
+          "lineage_downstream": [
+            "silver_l1.purchases__debit_purchase"
+          ]
+        },
+        {
+          "nome": "bronze.purchases__debit_cancelled",
+          "camada_medalhao": "Bronze",
+          "produto": "core_debit_purchase",
+          "camada_produto": "Core",
+          "papel": "Tópico raw (staging)",
+          "pipeline": "Streaming ingestion (platform)",
+          "frequencia": "Streaming contínuo",
+          "fonte_origem": "Fonte: rail de débito, tópico cancelled",
+          "colunas": [
+            {
+              "nome": "event_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "card_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "customer_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "status",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "amount",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "cancellation_reason",
+              "tipo": "TEXT",
+              "nullable": true
+            },
+            {
+              "nome": "merchant_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_category_code",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "channel",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "event_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "ingest_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [],
+          "lineage_downstream": [
+            "silver_l1.purchases__debit_purchase"
+          ]
+        },
+        {
+          "nome": "bronze.purchases__debit_clearing",
+          "camada_medalhao": "Bronze",
+          "produto": "core_debit_purchase",
+          "camada_produto": "Core",
+          "papel": "Tópico raw (staging)",
+          "pipeline": "Streaming ingestion (platform)",
+          "frequencia": "Streaming contínuo",
+          "fonte_origem": "Fonte: rail de débito, tópico clearing",
+          "colunas": [
+            {
+              "nome": "event_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "card_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "customer_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "status",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "amount",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_category_code",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "event_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "ingest_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [],
+          "lineage_downstream": [
+            "silver_l1.purchases__debit_purchase"
+          ]
+        },
+        {
+          "nome": "bronze.purchases__debit_processed",
+          "camada_medalhao": "Bronze",
+          "produto": "core_debit_purchase",
+          "camada_produto": "Core",
+          "papel": "Tópico raw (staging)",
+          "pipeline": "Streaming ingestion (platform)",
+          "frequencia": "Streaming contínuo",
+          "fonte_origem": "Fonte: rail de débito, tópico processed",
+          "colunas": [
+            {
+              "nome": "event_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "card_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "customer_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "status",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "amount",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_category_code",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "network_fee",
+              "tipo": "REAL",
+              "nullable": true
+            },
+            {
+              "nome": "event_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "ingest_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [],
+          "lineage_downstream": [
+            "silver_l1.purchases__debit_purchase"
+          ]
+        },
+        {
+          "nome": "silver_l1.purchases__debit_purchase",
+          "camada_medalhao": "Silver L1",
+          "produto": "core_debit_purchase",
+          "camada_produto": "Core",
+          "papel": "Histórico de eventos de status (append-only, N linhas por compra)",
+          "pipeline": "pipeline_core_purchases_debit_purchase",
+          "frequencia": "Incremental: aprovação em minutos, status final (processed) em D+1",
+          "fonte_origem": "",
+          "colunas": [
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "event_sequence",
+              "tipo": "INTEGER",
+              "nullable": false
+            },
+            {
+              "nome": "status",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "event_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "card_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "customer_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "amount",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "processed_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [
+            "bronze.purchases__debit_approved",
+            "bronze.purchases__debit_denied",
+            "bronze.purchases__debit_cancelled",
+            "bronze.purchases__debit_clearing",
+            "bronze.purchases__debit_processed"
+          ],
+          "lineage_downstream": [
+            "silver_l2.purchases__debit_purchase",
+            "gold.analytics__latencia_liquidacao_compra"
+          ]
+        },
+        {
+          "nome": "silver_l2.purchases__debit_purchase",
+          "camada_medalhao": "Silver L2",
+          "produto": "core_debit_purchase",
+          "camada_produto": "Core",
+          "papel": "Interface exposta do produto — estado atual via regra de precedência de status (regra de negócio, não dedup técnico) — 1 linha por compra",
+          "pipeline": "pipeline_core_purchases_debit_purchase",
+          "frequencia": "Incremental: aprovação em minutos, status final (processed) em D+1",
+          "fonte_origem": "",
+          "colunas": [
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "status",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "status_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "card_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "customer_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "amount",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_category_code",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "channel",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "event_count",
+              "tipo": "INTEGER",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [
+            "silver_l1.purchases__debit_purchase"
+          ],
+          "lineage_downstream": [
+            "gold.integration__purchase_journey",
+            "gold.analytics__taxa_aprovacao_compra",
+            "gold.analytics__motivos_negacao_compra"
+          ]
+        },
+        {
+          "nome": "bronze.purchases__credit_transaction",
+          "camada_medalhao": "Bronze",
+          "produto": "core_credit_transaction",
+          "camada_produto": "Core",
+          "papel": "Tópico raw (staging)",
+          "pipeline": "Streaming ingestion (platform)",
+          "frequencia": "Streaming contínuo",
+          "fonte_origem": "Fonte: rail de crédito, tópico único 'transaction' (compra + parcelas)",
+          "colunas": [
+            {
+              "nome": "transaction_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "installment_number",
+              "tipo": "INTEGER",
+              "nullable": false,
+              "descricao": "Número da parcela (1, 2, 3...)"
+            },
+            {
+              "nome": "installment_amount",
+              "tipo": "REAL",
+              "nullable": false,
+              "descricao": "Valor da parcela"
+            },
+            {
+              "nome": "installment_interest_rate",
+              "tipo": "REAL",
+              "nullable": true,
+              "descricao": "Taxa de juros da parcela"
+            },
+            {
+              "nome": "transaction_type_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "descricao": "Referência para transaction_type (vista, parcelado_sem_juros, parcelado_com_juros)",
+              "chave_estrangeira": {
+                "tabela": "bronze.purchases__credit_transaction_type",
+                "coluna": "transaction_type_id"
+              }
+            }
+          ],
+          "lineage_upstream": [],
+          "lineage_downstream": [
+            "silver.purchases__credit_transaction"
+          ]
+        },
+        {
+          "nome": "silver.purchases__credit_transaction",
+          "camada_medalhao": "Silver",
+          "produto": "core_credit_transaction",
+          "camada_produto": "Core",
+          "papel": "Insumo interno de integration_purchase_journey (não é produto catalogado)",
+          "pipeline": "pipeline_integration_purchase_journey",
+          "frequencia": "Incremental, mesma cadência da fonte",
+          "fonte_origem": "",
+          "colunas": [
+            {
+              "nome": "transaction_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "installment_number",
+              "tipo": "INTEGER",
+              "nullable": false
+            },
+            {
+              "nome": "installment_amount",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "installment_interest_rate",
+              "tipo": "REAL",
+              "nullable": true
+            },
+            {
+              "nome": "transaction_type_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_estrangeira": {
+                "tabela": "silver.purchases__credit_transaction_type",
+                "coluna": "transaction_type_id"
+              }
+            }
+          ],
+          "lineage_upstream": [
+            "bronze.purchases__credit_transaction"
+          ],
+          "lineage_downstream": [
+            "gold.integration__purchase_journey",
+            "gold.analytics__adocao_parcelamento"
+          ]
+        },
+        {
+          "nome": "bronze.purchases__credit_transaction_type",
+          "camada_medalhao": "Bronze",
+          "produto": "core_credit_transaction_type",
+          "camada_produto": "Core",
+          "papel": "Tópico raw (staging) — dimensão",
+          "pipeline": "Streaming ingestion (platform)",
+          "frequencia": "Baixa frequência (dimensão muda pouco)",
+          "fonte_origem": "Fonte: rail de crédito, tópico 'transaction_type'",
+          "colunas": [
+            {
+              "nome": "transaction_type_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "name",
+              "tipo": "TEXT",
+              "nullable": false,
+              "descricao": "Nome do tipo (à vista, parcelado sem juros, parcelado com juros)"
+            },
+            {
+              "nome": "description",
+              "tipo": "TEXT",
+              "nullable": true
+            }
+          ],
+          "lineage_upstream": [],
+          "lineage_downstream": [
+            "silver.purchases__credit_transaction_type"
+          ]
+        },
+        {
+          "nome": "silver.purchases__credit_transaction_type",
+          "camada_medalhao": "Silver",
+          "produto": "core_credit_transaction_type",
+          "camada_produto": "Core",
+          "papel": "Insumo interno de integration_purchase_journey (não é produto catalogado)",
+          "pipeline": "pipeline_integration_purchase_journey",
+          "frequencia": "Batch diário (dimensão de baixa mudança)",
+          "fonte_origem": "",
+          "colunas": [
+            {
+              "nome": "transaction_type_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "name",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "description",
+              "tipo": "TEXT",
+              "nullable": true
+            }
+          ],
+          "lineage_upstream": [
+            "bronze.purchases__credit_transaction_type"
+          ],
+          "lineage_downstream": [
+            "gold.integration__purchase_journey"
+          ]
+        },
+        {
+          "nome": "gold.integration__purchase_journey",
+          "camada_medalhao": "Gold",
+          "produto": "integration_purchase_journey",
+          "camada_produto": "Integration",
+          "papel": "Interface exposta do produto — grão de compra, com parcelas relacionadas quando existirem",
+          "pipeline": "pipeline_integration_purchase_journey",
+          "frequencia": "Herda o SLA incremental dos Core: parcial em minutos, completo em D+1",
+          "fonte_origem": "",
+          "colunas": [
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "rail",
+              "tipo": "TEXT",
+              "nullable": false,
+              "descricao": "Tipo de transação (credit ou debit)"
+            },
+            {
+              "nome": "status",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "status_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "card_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "customer_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "amount",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_category_code",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "channel",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "installments",
+              "tipo": "INTEGER",
+              "nullable": true
+            },
+            {
+              "nome": "reversal_amount",
+              "tipo": "REAL",
+              "nullable": true,
+              "descricao": "Valor de estorno (disputas)"
+            },
+            {
+              "nome": "created_at",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "updated_at",
+              "tipo": "TEXT",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [
+            "silver_l2.purchases__credit_purchase",
+            "silver_l2.purchases__debit_purchase",
+            "silver.purchases__credit_transaction",
+            "silver.purchases__credit_transaction_type",
+            "silver_l2.disputes__chargeback"
+          ],
+          "lineage_downstream": [
+            "gold.analytics__extrato_cliente",
+            "gold.analytics__comportamento_gasto",
+            "gold.analytics__ranking_lojista_categoria",
+            "gold.analytics__adocao_parcelamento",
+            "gold.analytics__mix_canal",
+            "gold.analytics__gasto_internacional",
+            "gold.analytics__gasto_elegivel_rewards"
+          ]
+        },
+        {
+          "nome": "gold.analytics__extrato_cliente",
+          "camada_medalhao": "Gold",
+          "produto": "analytics_extrato_cliente",
+          "camada_produto": "Analytics",
+          "papel": "Interface exposta do produto",
+          "pipeline": "pipeline_analytics_extrato_cliente",
+          "frequencia": "Incremental, mesma cadência de integration_purchase_journey (completude legal)",
+          "fonte_origem": "",
+          "colunas": [
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true,
+              "chave_estrangeira": {
+                "tabela": "gold.integration__purchase_journey",
+                "coluna": "purchase_id"
+              }
+            },
+            {
+              "nome": "customer_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "amount",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "status",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "transaction_date",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "merchant_name",
+              "tipo": "TEXT",
+              "nullable": true
+            }
+          ],
+          "lineage_upstream": [
+            "gold.integration__purchase_journey"
+          ],
+          "lineage_downstream": []
+        },
+        {
+          "nome": "gold.analytics__comportamento_gasto",
+          "camada_medalhao": "Gold",
+          "produto": "analytics_comportamento_gasto",
+          "camada_produto": "Analytics",
+          "papel": "Interface exposta do produto",
+          "pipeline": "pipeline_analytics_comportamento_gasto",
+          "frequencia": "Batch diário",
+          "fonte_origem": "",
+          "colunas": [
+            {
+              "nome": "customer_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "total_spent",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "average_ticket",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "purchase_count",
+              "tipo": "INTEGER",
+              "nullable": false
+            },
+            {
+              "nome": "top_category",
+              "tipo": "TEXT",
+              "nullable": true
+            }
+          ],
+          "lineage_upstream": [
+            "gold.integration__purchase_journey"
+          ],
+          "lineage_downstream": []
+        },
+        {
+          "nome": "gold.analytics__taxa_aprovacao_compra",
+          "camada_medalhao": "Gold",
+          "produto": "analytics_taxa_aprovacao_compra",
+          "camada_produto": "Analytics",
+          "papel": "Interface exposta do produto",
+          "pipeline": "pipeline_analytics_taxa_aprovacao_compra",
+          "frequencia": "Batch diário",
+          "fonte_origem": "",
+          "colunas": [
+            {
+              "nome": "periodo",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "segmento",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "total_compras",
+              "tipo": "INTEGER",
+              "nullable": false
+            },
+            {
+              "nome": "compras_aprovadas",
+              "tipo": "INTEGER",
+              "nullable": false
+            },
+            {
+              "nome": "compras_negadas",
+              "tipo": "INTEGER",
+              "nullable": false
+            },
+            {
+              "nome": "taxa_aprovacao",
+              "tipo": "REAL",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [
+            "silver_l2.purchases__credit_purchase",
+            "silver_l2.purchases__debit_purchase"
+          ],
+          "lineage_downstream": []
+        },
+        {
+          "nome": "gold.analytics__motivos_negacao_compra",
+          "camada_medalhao": "Gold",
+          "produto": "analytics_motivos_negacao_compra",
+          "camada_produto": "Analytics",
+          "papel": "Interface exposta do produto",
+          "pipeline": "pipeline_analytics_motivos_negacao_compra",
+          "frequencia": "Batch diário",
+          "fonte_origem": "",
+          "colunas": [
+            {
+              "nome": "denial_reason",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "count",
+              "tipo": "INTEGER",
+              "nullable": false
+            },
+            {
+              "nome": "percentage",
+              "tipo": "REAL",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [
+            "silver_l2.purchases__credit_purchase",
+            "silver_l2.purchases__debit_purchase"
+          ],
+          "lineage_downstream": []
+        },
+        {
+          "nome": "gold.analytics__ranking_lojista_categoria",
+          "camada_medalhao": "Gold",
+          "produto": "analytics_ranking_lojista_categoria",
+          "camada_produto": "Analytics",
+          "papel": "Interface exposta do produto",
+          "pipeline": "pipeline_analytics_ranking_lojista_categoria",
+          "frequencia": "Batch diário/semanal",
+          "fonte_origem": "",
+          "colunas": [
+            {
+              "nome": "merchant_category_code",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "merchant_name",
+              "tipo": "TEXT",
+              "nullable": true
+            },
+            {
+              "nome": "count",
+              "tipo": "INTEGER",
+              "nullable": false
+            },
+            {
+              "nome": "total_spent",
+              "tipo": "REAL",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [
+            "gold.integration__purchase_journey"
+          ],
+          "lineage_downstream": []
+        },
+        {
+          "nome": "gold.analytics__adocao_parcelamento",
+          "camada_medalhao": "Gold",
+          "produto": "analytics_adocao_parcelamento",
+          "camada_produto": "Analytics",
+          "papel": "Interface exposta do produto — ATENÇÃO: consome core_credit_transaction diretamente, hoje marcado como insumo interno (não produto). Este é exatamente o tipo de consumidor externo real que justificaria promovê-lo a produto Core próprio, com contrato e dono formal.",
+          "pipeline": "pipeline_analytics_adocao_parcelamento",
+          "frequencia": "Batch diário",
+          "fonte_origem": "",
+          "colunas": [
+            {
+              "nome": "installment_count",
+              "tipo": "INTEGER",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "total_compras",
+              "tipo": "INTEGER",
+              "nullable": false
+            },
+            {
+              "nome": "average_amount",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "percentage",
+              "tipo": "REAL",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [
+            "silver.purchases__credit_transaction",
+            "gold.integration__purchase_journey"
+          ],
+          "lineage_downstream": []
+        },
+        {
+          "nome": "gold.analytics__latencia_liquidacao_compra",
+          "camada_medalhao": "Gold",
+          "produto": "analytics_latencia_liquidacao_compra",
+          "camada_produto": "Analytics",
+          "papel": "Interface exposta do produto — consome L1 (histórico de eventos), não L2, porque precisa de múltiplos timestamps por compra (approved_at, clearing_at, processed_at) para calcular a latência entre estágios",
+          "pipeline": "pipeline_analytics_latencia_liquidacao_compra",
+          "frequencia": "Batch diário",
+          "fonte_origem": "",
+          "colunas": [
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true,
+              "chave_estrangeira": {
+                "tabela": "gold.integration__purchase_journey",
+                "coluna": "purchase_id"
+              }
+            },
+            {
+              "nome": "approved_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "clearing_timestamp",
+              "tipo": "TEXT",
+              "nullable": true
+            },
+            {
+              "nome": "processed_timestamp",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "latencia_minutos",
+              "tipo": "INTEGER",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [
+            "silver_l1.purchases__credit_purchase",
+            "silver_l1.purchases__debit_purchase"
+          ],
+          "lineage_downstream": []
+        },
+        {
+          "nome": "gold.analytics__mix_canal",
+          "camada_medalhao": "Gold",
+          "produto": "analytics_mix_canal",
+          "camada_produto": "Analytics",
+          "papel": "Interface exposta do produto",
+          "pipeline": "pipeline_analytics_mix_canal",
+          "frequencia": "Batch diário",
+          "fonte_origem": "",
+          "colunas": [
+            {
+              "nome": "channel",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true
+            },
+            {
+              "nome": "count",
+              "tipo": "INTEGER",
+              "nullable": false
+            },
+            {
+              "nome": "percentage",
+              "tipo": "REAL",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [
+            "gold.integration__purchase_journey"
+          ],
+          "lineage_downstream": []
+        },
+        {
+          "nome": "gold.analytics__gasto_internacional",
+          "camada_medalhao": "Gold",
+          "produto": "analytics_gasto_internacional",
+          "camada_produto": "Analytics",
+          "papel": "Interface exposta do produto — PENDÊNCIA: taxa de câmbio provavelmente vem de uma fonte de Tesouraria ainda não mapeada",
+          "pipeline": "pipeline_analytics_gasto_internacional",
+          "frequencia": "Batch diário",
+          "fonte_origem": "",
+          "colunas": [
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true,
+              "chave_estrangeira": {
+                "tabela": "gold.integration__purchase_journey",
+                "coluna": "purchase_id"
+              }
+            },
+            {
+              "nome": "amount_usd",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "amount_brl",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "exchange_rate",
+              "tipo": "REAL",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [
+            "gold.integration__purchase_journey"
+          ],
+          "lineage_downstream": []
+        },
+        {
+          "nome": "gold.analytics__gasto_elegivel_rewards",
+          "camada_medalhao": "Gold",
+          "produto": "analytics_gasto_elegivel_rewards",
+          "camada_produto": "Analytics",
+          "papel": "Interface exposta do produto — PENDÊNCIA: regra de elegibilidade depende do subdomínio Benefícios/Rewards, ainda não mapeado",
+          "pipeline": "pipeline_analytics_gasto_elegivel_rewards",
+          "frequencia": "Batch diário",
+          "fonte_origem": "",
+          "colunas": [
+            {
+              "nome": "purchase_id",
+              "tipo": "TEXT",
+              "nullable": false,
+              "chave_primaria": true,
+              "chave_estrangeira": {
+                "tabela": "gold.integration__purchase_journey",
+                "coluna": "purchase_id"
+              }
+            },
+            {
+              "nome": "customer_id",
+              "tipo": "TEXT",
+              "nullable": false
+            },
+            {
+              "nome": "eligible_amount",
+              "tipo": "REAL",
+              "nullable": false
+            },
+            {
+              "nome": "category",
+              "tipo": "TEXT",
+              "nullable": false
+            }
+          ],
+          "lineage_upstream": [
+            "gold.integration__purchase_journey"
+          ],
+          "lineage_downstream": []
+        }
+      ],
+      "tabelas_externas_lineage": [
+        "silver_l2.disputes__chargeback"
+      ],
+      "relacoes": [
+        {
+          "tabela_origem": "bronze.purchases__credit_transaction",
+          "coluna_origem": "transaction_type_id",
+          "tabela_destino": "bronze.purchases__credit_transaction_type",
+          "coluna_destino": "transaction_type_id"
+        },
+        {
+          "tabela_origem": "silver.purchases__credit_transaction",
+          "coluna_origem": "transaction_type_id",
+          "tabela_destino": "silver.purchases__credit_transaction_type",
+          "coluna_destino": "transaction_type_id"
+        },
+        {
+          "tabela_origem": "gold.analytics__extrato_cliente",
+          "coluna_origem": "purchase_id",
+          "tabela_destino": "gold.integration__purchase_journey",
+          "coluna_destino": "purchase_id"
+        },
+        {
+          "tabela_origem": "gold.analytics__latencia_liquidacao_compra",
+          "coluna_origem": "purchase_id",
+          "tabela_destino": "gold.integration__purchase_journey",
+          "coluna_destino": "purchase_id"
+        },
+        {
+          "tabela_origem": "gold.analytics__gasto_internacional",
+          "coluna_origem": "purchase_id",
+          "tabela_destino": "gold.integration__purchase_journey",
+          "coluna_destino": "purchase_id"
+        },
+        {
+          "tabela_origem": "gold.analytics__gasto_elegivel_rewards",
+          "coluna_origem": "purchase_id",
+          "tabela_destino": "gold.integration__purchase_journey",
+          "coluna_destino": "purchase_id"
+        }
+      ]
+    }
+  ]
+};
+
+const LAYER_ORDER = ["Bronze", "Silver L1", "Silver L2", "Silver", "Gold"];
+const LAYER_COLOR = {
+  "Bronze": "var(--layer-bronze)",
+  "Silver L1": "var(--layer-silver-l1)",
+  "Silver L2": "var(--layer-silver-l2)",
+  "Silver": "var(--layer-silver)",
+  "Gold": "var(--layer-gold)",
+};
+const PREFIXO_PARA_CAMADA = {
+  "bronze": "Bronze",
+  "silver_l1": "Silver L1",
+  "silver_l2": "Silver L2",
+  "silver": "Silver",
+  "gold": "Gold",
+};
+
+const CARD_W = 210;
+const CARD_H = 56;
+const COL_GAP = 170;
+const ROW_GAP = 14;
+const COL_X0 = 40;
+const ROW_Y0 = 60;
+
+const SVGNS = "http://www.w3.org/2000/svg";
+
+function el(tag, attrs, ...children) {
+  const node = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) node.setAttribute(k, attrs[k]);
+  for (const c of children) if (c) node.appendChild(c);
+  return node;
+}
+function htmlEl(tag, attrs, text) {
+  const node = document.createElement(tag);
+  for (const k in attrs || {}) node.setAttribute(k, attrs[k]);
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+// ---------------------------------------------------------------------
+// Estado do mapa (assume o primeiro subdomínio com schema físico —
+// hoje só compras-autorizacao; a estrutura já suporta mais de um)
+// ---------------------------------------------------------------------
+const mapa = DATA.mapas_detalhados[0];
+
+let nodes = [];       // {id, nome, curto, camada, tabela, externo}
+let nodeById = {};
+let selectedId = null;
+let searchTerm = "";
+let activeLayers = new Set();
+let activeProdutos = new Set();
+let activeCamadasProduto = new Set();
+let showLineage = true;
+let showRelacional = true;
+
+let view = { x: 0, y: 0, k: 1 };
+
+function nomeCurto(nome) {
+  const parts = nome.split(".");
+  return parts.length > 1 ? parts[1] : nome;
+}
+
+function camadaDeNomeExterno(nome) {
+  const prefixo = nome.split(".")[0];
+  return PREFIXO_PARA_CAMADA[prefixo] || "Gold";
+}
+
+function montarNodes() {
+  nodes = [];
+  const porCamada = {};
+  LAYER_ORDER.forEach(l => porCamada[l] = []);
+
+  for (const t of mapa.tabelas) {
+    porCamada[t.camada_medalhao] = porCamada[t.camada_medalhao] || [];
+    porCamada[t.camada_medalhao].push({ id: t.nome, nome: t.nome, curto: nomeCurto(t.nome), camada: t.camada_medalhao, tabela: t, externo: false });
+  }
+  for (const nomeExt of mapa.tabelas_externas_lineage) {
+    const camada = camadaDeNomeExterno(nomeExt);
+    porCamada[camada] = porCamada[camada] || [];
+    porCamada[camada].push({ id: nomeExt, nome: nomeExt, curto: nomeCurto(nomeExt), camada, tabela: null, externo: true });
+  }
+
+  LAYER_ORDER.forEach((camada, colIdx) => {
+    const lista = porCamada[camada] || [];
+    lista.forEach((n, rowIdx) => {
+      n.x = COL_X0 + colIdx * (CARD_W + COL_GAP);
+      n.y = ROW_Y0 + rowIdx * (CARD_H + ROW_GAP);
+      nodes.push(n);
+    });
+  });
+
+  nodeById = {};
+  nodes.forEach(n => nodeById[n.id] = n);
+}
+
+function contentHeight() {
+  let max = 0;
+  nodes.forEach(n => max = Math.max(max, n.y + CARD_H));
+  return max + 40;
+}
+function contentWidth() {
+  return COL_X0 + LAYER_ORDER.length * (CARD_W + COL_GAP);
+}
+
+// ---------------------------------------------------------------------
+// Render
+// ---------------------------------------------------------------------
+const svg = document.getElementById("canvas-svg");
+let rootG;
+
+function edgePoint(node, side) {
+  // side: 'right' (saída) ou 'left' (entrada)
+  const y = node.y + CARD_H / 2;
+  return { x: side === "right" ? node.x + CARD_W : node.x, y };
+}
+
+function pathBetween(a, b) {
+  const p1 = edgePoint(a, "right");
+  const p2 = edgePoint(b, "left");
+  const colA = LAYER_ORDER.indexOf(a.camada);
+  const colB = LAYER_ORDER.indexOf(b.camada);
+
+  if (colB < colA) {
+    // Referência "para trás" (coluna destino fica à esquerda da origem, ex:
+    // Silver → Silver L2): roteia por cima das tabelas em vez de cruzar a
+    // tela inteira na diagonal por cima dos cartões.
+    const topY = ROW_Y0 - 30;
+    return `M ${p1.x} ${p1.y} L ${p1.x + 24} ${p1.y} L ${p1.x + 24} ${topY} `
+         + `L ${p2.x - 24} ${topY} L ${p2.x - 24} ${p2.y} L ${p2.x} ${p2.y}`;
+  }
+  const dx = Math.max(60, (p2.x - p1.x) / 2);
+  return `M ${p1.x} ${p1.y} C ${p1.x + dx} ${p1.y}, ${p2.x - dx} ${p2.y}, ${p2.x} ${p2.y}`;
+}
+
+function render() {
+  svg.innerHTML = "";
+  const defs = el("defs");
+  defs.appendChild(el("marker", { id: "arrow-lineage", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" },
+    el("path", { d: "M0,0 L10,5 L0,10 z", fill: "var(--edge-lineage)" })));
+  defs.appendChild(el("marker", { id: "arrow-relacional", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 6, markerHeight: 6, orient: "auto-start-reverse" },
+    el("path", { d: "M0,0 L10,5 L0,10 z", fill: "var(--edge-relacional)" })));
+  svg.appendChild(defs);
+
+  rootG = el("g", { id: "root-g" });
+  svg.appendChild(rootG);
+
+  renderLayerBands();
+  renderLineageEdges();
+  renderRelationalEdges();
+  renderNodes();
+  applyTransform();
+}
+
+function renderLayerBands() {
+  LAYER_ORDER.forEach((camada, colIdx) => {
+    const x = COL_X0 + colIdx * (CARD_W + COL_GAP) - 16;
+    rootG.appendChild(el("text", { x: x, y: 30, class: "layer-header", fill: LAYER_COLOR[camada] }, document.createTextNode(camada)));
+  });
+}
+
+function nodeActive(n) {
+  if (!activeLayers.has(n.camada)) return false;
+  if (n.externo) return true;
+  if (!activeProdutos.has(n.tabela.produto)) return false;
+  if (!activeCamadasProduto.has(n.tabela.camada_produto)) return false;
+  return true;
+}
+
+function edgeVisible(nomeA, nomeB) {
+  const a = nodeById[nomeA], b = nodeById[nomeB];
+  if (!a || !b) return false;
+  if (!nodeActive(a) || !nodeActive(b)) return false;
+  return true;
+}
+
+function nodeMatchesSearch(n) {
+  if (!searchTerm) return true;
+  return n.curto.toLowerCase().includes(searchTerm) || n.nome.toLowerCase().includes(searchTerm);
+}
+
+function renderLineageEdges() {
+  const g = el("g", { id: "lineage-edges" });
+  if (!showLineage) { rootG.appendChild(g); return; }
+  let i = 0;
+  for (const t of mapa.tabelas) {
+    for (const upstream of t.lineage_upstream) {
+      if (!edgeVisible(upstream, t.nome)) continue;
+      const a = nodeById[upstream], b = nodeById[t.nome];
+      const id = `lineage-${i++}`;
+      const dimmed = (searchTerm && !(nodeMatchesSearch(a) || nodeMatchesSearch(b))) ? " dimmed" : "";
+      const path = el("path", { id, class: "edge-lineage dashflow" + dimmed, d: pathBetween(a, b), "marker-end": "url(#arrow-lineage)" });
+      g.appendChild(path);
+      const dot = el("circle", { r: 3, class: "flow-dot" });
+      const anim = el("animateMotion", { dur: (2.4 + Math.random() * 1.2).toFixed(1) + "s", repeatCount: "indefinite" });
+      const mpath = el("mpath");
+      mpath.setAttributeNS("http://www.w3.org/1999/xlink", "href", "#" + id);
+      anim.appendChild(mpath);
+      dot.appendChild(anim);
+      if (!dimmed) g.appendChild(dot);
+    }
+  }
+  rootG.appendChild(g);
+}
+
+function renderRelationalEdges() {
+  const g = el("g", { id: "relational-edges" });
+  if (!showRelacional) { rootG.appendChild(g); return; }
+  for (const r of mapa.relacoes) {
+    if (!edgeVisible(r.tabela_origem, r.tabela_destino)) continue;
+    const a = nodeById[r.tabela_origem], b = nodeById[r.tabela_destino];
+    const dimmed = (searchTerm && !(nodeMatchesSearch(a) || nodeMatchesSearch(b))) ? " dimmed" : "";
+    const d = pathBetween(a, b);
+    g.appendChild(el("path", { class: "edge-relacional" + dimmed, d, "marker-end": "url(#arrow-relacional)" }));
+  }
+  rootG.appendChild(g);
+}
+
+function renderNodes() {
+  const g = el("g", { id: "nodes" });
+  for (const n of nodes) {
+    const dimmed = (searchTerm && !nodeMatchesSearch(n)) || !nodeActive(n);
+    const selected = n.id === selectedId;
+    const group = el("g", { transform: `translate(${n.x},${n.y})`, style: "cursor:pointer" });
+    group.appendChild(el("rect", {
+      width: CARD_W, height: CARD_H,
+      class: "table-card" + (selected ? " selected" : "") + (dimmed ? " dimmed" : "") + (n.externo ? " external" : ""),
+      stroke: n.externo ? LAYER_COLOR[n.camada] : undefined,
+    }));
+    group.appendChild(el("rect", { width: 5, height: CARD_H, fill: n.externo ? "transparent" : LAYER_COLOR[n.camada], rx: 2 }));
+    const title = el("text", { x: 14, y: 22, class: "table-title" }, document.createTextNode(n.curto));
+    group.appendChild(title);
+    if (n.externo) {
+      group.appendChild(el("text", { x: 14, y: 38, class: "table-sub" }, document.createTextNode("externo — outro subdomínio")));
+    } else {
+      const ncols = n.tabela.colunas.length;
+      const npk = n.tabela.colunas.filter(c => c.chave_primaria).length;
+      const nfk = n.tabela.colunas.filter(c => c.chave_estrangeira).length;
+      group.appendChild(el("text", { x: 14, y: 38, class: "table-sub" },
+        document.createTextNode(`${ncols} colunas${npk ? " · PK" : ""}${nfk ? ` · ${nfk} FK` : ""}`)));
+    }
+    group.addEventListener("click", () => selecionarNode(n.id));
+    g.appendChild(group);
+  }
+  rootG.appendChild(g);
+}
+
+function applyTransform() {
+  rootG.setAttribute("transform", `translate(${view.x},${view.y}) scale(${view.k})`);
+}
+
+// ---------------------------------------------------------------------
+// Side panel
+// ---------------------------------------------------------------------
+function selecionarNode(id) {
+  selectedId = id;
+  render();
+  renderSidePanel();
+}
+
+function badgeCamada(camada) {
+  return `<span class="badge" style="background:${LAYER_COLOR[camada]}">${camada}</span>`;
+}
+
+function renderSidePanel() {
+  const panel = document.getElementById("side-panel");
+  const n = nodeById[selectedId];
+  if (!n) {
+    panel.innerHTML = '<p class="hint">Clique em uma tabela para ver colunas, tipos, lineage e relações.</p>';
+    return;
+  }
+  if (n.externo) {
+    panel.innerHTML = `
+      <h2>${n.curto}</h2>
+      ${badgeCamada(n.camada)}
+      <p class="hint" style="margin-top:10px">Tabela referenciada como fonte de lineage, mas pertence a outro
+      subdomínio (sem <code>schema-fisico.yaml</code> neste catálogo ainda). Nome completo:
+      <code>${n.nome}</code>.</p>
+    `;
+    return;
+  }
+
+  const t = n.tabela;
+  let colunasHtml = t.colunas.map(c => {
+    const fk = c.chave_estrangeira
+      ? `<div class="fk">→ ${c.chave_estrangeira.tabela}.${c.chave_estrangeira.coluna}</div>`
+      : "";
+    return `<tr>
+      <td>${c.chave_primaria ? '<span class="pk">PK</span> ' : ""}${c.nome}</td>
+      <td>${c.tipo}</td>
+      <td>${c.nullable ? "sim" : "não"}</td>
+      <td>${c.descricao || ""}${fk}</td>
+    </tr>`;
+  }).join("");
+
+  function chipsLinks(lista, label) {
+    if (!lista.length) return "";
+    const btns = lista.map(nome => `<button class="chip-btn" data-goto="${nome}">${nomeCurto(nome)}</button>`).join("");
+    return `<div class="section-title">${label}</div><div class="chips-list">${btns}</div>`;
+  }
+
+  const relOrigem = mapa.relacoes.filter(r => r.tabela_origem === t.nome);
+  const relDestino = mapa.relacoes.filter(r => r.tabela_destino === t.nome);
+  let relHtml = "";
+  if (relOrigem.length || relDestino.length) {
+    relHtml = '<div class="section-title">Relações</div>';
+    relOrigem.forEach(r => relHtml += `<div class="hint">${r.coluna_origem} → ${nomeCurto(r.tabela_destino)}.${r.coluna_destino}</div>`);
+    relDestino.forEach(r => relHtml += `<div class="hint">${nomeCurto(r.tabela_origem)}.${r.coluna_origem} → ${r.coluna_destino}</div>`);
+  }
+
+  panel.innerHTML = `
+    <h2>${n.curto}</h2>
+    ${badgeCamada(n.camada)}
+    ${t.produto ? `<span class="badge" style="background:#374151">${t.camada_produto}: ${t.produto}</span>` : ""}
+    <p class="hint" style="margin-top:8px">${t.papel || ""}</p>
+    <p class="hint">Pipeline: ${t.pipeline || "—"} · Frequência: ${t.frequencia || "—"}</p>
+    ${t.fonte_origem ? `<p class="hint">${t.fonte_origem}</p>` : ""}
+    <table>
+      <thead><tr><th>Coluna</th><th>Tipo</th><th>Nullable</th><th>Descrição / FK</th></tr></thead>
+      <tbody>${colunasHtml}</tbody>
+    </table>
+    ${chipsLinks(t.lineage_upstream, "Lineage — vem de")}
+    ${chipsLinks(t.lineage_downstream, "Lineage — alimenta")}
+    ${relHtml}
+  `;
+
+  panel.querySelectorAll("[data-goto]").forEach(btn => {
+    btn.addEventListener("click", () => selecionarNode(btn.getAttribute("data-goto")));
+  });
+}
+
+// ---------------------------------------------------------------------
+// Toolbar: busca, filtros suspensos (camada / produto / core-integration-analytics),
+// toggles de aresta, pan & zoom
+// ---------------------------------------------------------------------
+const CAMADA_PRODUTO_ORDER = ["Core", "Integration", "Analytics"];
+
+function distinctProdutos() {
+  const vistos = new Map();
+  mapa.tabelas.forEach(t => { if (t.produto) vistos.set(t.produto, t.camada_produto); });
+  return Array.from(vistos.entries())
+    .sort((a, b) => {
+      const oa = CAMADA_PRODUTO_ORDER.indexOf(a[1]);
+      const ob = CAMADA_PRODUTO_ORDER.indexOf(b[1]);
+      if (oa !== ob) return oa - ob;
+      return a[0].localeCompare(b[0]);
+    })
+    .map(([produto]) => produto);
+}
+
+function distinctCamadasProduto() {
+  const presentes = new Set(mapa.tabelas.map(t => t.camada_produto).filter(Boolean));
+  return CAMADA_PRODUTO_ORDER.filter(c => presentes.has(c));
+}
+
+function createDropdown(label, values, activeSet) {
+  values.forEach(v => activeSet.add(v));
+
+  const wrap = htmlEl("div", { class: "dropdown" });
+  const btn = htmlEl("button", { class: "dropdown-btn", type: "button" });
+  const panel = htmlEl("div", { class: "dropdown-panel" });
+  panel.hidden = true;
+
+  function updateLabel() {
+    btn.textContent = `${label} (${activeSet.size}/${values.length})`;
+  }
+
+  const actions = htmlEl("div", { class: "dropdown-actions" });
+  const allBtn = htmlEl("button", { type: "button" }, "Todos");
+  const noneBtn = htmlEl("button", { type: "button" }, "Nenhum");
+  actions.appendChild(allBtn);
+  actions.appendChild(noneBtn);
+  panel.appendChild(actions);
+
+  const checkboxes = [];
+  values.forEach(v => {
+    const optLabel = htmlEl("label", { class: "dropdown-option" });
+    const cb = htmlEl("input", { type: "checkbox" });
+    cb.checked = true;
+    cb.addEventListener("change", () => {
+      if (cb.checked) activeSet.add(v); else activeSet.delete(v);
+      updateLabel();
+      render();
+    });
+    checkboxes.push(cb);
+    optLabel.appendChild(cb);
+    optLabel.appendChild(document.createTextNode(" " + v));
+    panel.appendChild(optLabel);
+  });
+
+  allBtn.addEventListener("click", () => {
+    values.forEach(v => activeSet.add(v));
+    checkboxes.forEach(cb => cb.checked = true);
+    updateLabel();
+    render();
+  });
+  noneBtn.addEventListener("click", () => {
+    activeSet.clear();
+    checkboxes.forEach(cb => cb.checked = false);
+    updateLabel();
+    render();
+  });
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    document.querySelectorAll(".dropdown-panel").forEach(p => { if (p !== panel) p.hidden = true; });
+    panel.hidden = !panel.hidden;
+  });
+  panel.addEventListener("click", (e) => e.stopPropagation());
+
+  updateLabel();
+  wrap.appendChild(btn);
+  wrap.appendChild(panel);
+  return wrap;
+}
+
+function montarFiltros() {
+  const container = document.getElementById("filters");
+  const presentes = LAYER_ORDER.filter(l => nodes.some(n => n.camada === l));
+  container.appendChild(createDropdown("Camadas", presentes, activeLayers));
+  container.appendChild(createDropdown("Produto de dados", distinctProdutos(), activeProdutos));
+  container.appendChild(createDropdown("Core / Integration / Analytics", distinctCamadasProduto(), activeCamadasProduto));
+
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".dropdown-panel").forEach(p => p.hidden = true);
+  });
+}
+
+document.getElementById("search-input").addEventListener("input", (e) => {
+  searchTerm = e.target.value.trim().toLowerCase();
+  render();
+});
+document.getElementById("toggle-lineage").addEventListener("change", (e) => { showLineage = e.target.checked; render(); });
+document.getElementById("toggle-relacional").addEventListener("change", (e) => { showRelacional = e.target.checked; render(); });
+document.getElementById("toggle-animacao").addEventListener("change", (e) => {
+  document.getElementById("canvas-wrap").classList.toggle("no-anim", !e.target.checked);
+  svg.querySelectorAll(".dashflow").forEach(p => p.style.animationPlayState = e.target.checked ? "running" : "paused");
+  svg.querySelectorAll("animateMotion").forEach(a => e.target.checked ? a.beginElement && a.beginElement() : a.endElement && a.endElement());
+});
+document.getElementById("reset-view").addEventListener("click", centerView);
+
+function centerView() {
+  const wrap = document.getElementById("canvas-wrap");
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  const cw = contentWidth(), ch = contentHeight();
+  const k = Math.min(1, Math.min(w / cw, h / ch) * 0.95);
+  view = { x: (w - cw * k) / 2, y: 20, k };
+  applyTransform();
+}
+
+(function setupPanZoom() {
+  const wrap = document.getElementById("canvas-wrap");
+  let dragging = false, last = null;
+  wrap.addEventListener("mousedown", (e) => { dragging = true; last = { x: e.clientX, y: e.clientY }; wrap.classList.add("grabbing"); });
+  window.addEventListener("mouseup", () => { dragging = false; wrap.classList.remove("grabbing"); });
+  window.addEventListener("mousemove", (e) => {
+    if (!dragging) return;
+    view.x += e.clientX - last.x;
+    view.y += e.clientY - last.y;
+    last = { x: e.clientX, y: e.clientY };
+    applyTransform();
+  });
+  wrap.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const rect = wrap.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const delta = e.deltaY < 0 ? 1.1 : 0.9;
+    const newK = Math.min(3, Math.max(0.25, view.k * delta));
+    view.x = mx - (mx - view.x) * (newK / view.k);
+    view.y = my - (my - view.y) * (newK / view.k);
+    view.k = newK;
+    applyTransform();
+  }, { passive: false });
+})();
+
+// ---------------------------------------------------------------------
+// Init
+// ---------------------------------------------------------------------
+montarNodes();
+montarFiltros();
+render();
+window.addEventListener("resize", centerView);
+setTimeout(centerView, 0);
+</script>

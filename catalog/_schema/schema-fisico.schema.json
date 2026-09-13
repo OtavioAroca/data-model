@@ -29,7 +29,7 @@
             "description": "Definição de cada coluna",
             "items": {
               "type": "object",
-              "required": ["nome", "tipo", "nullable", "descricao"],
+              "required": ["nome", "tipo", "nullable"],
               "properties": {
                 "nome": {
                   "type": "string",
@@ -56,7 +56,7 @@
                 },
                 "chave_estrangeira": {
                   "type": "object",
-                  "description": "Referência para outra tabela (opcional)",
+                  "description": "Referência estrutural para a chave primária de outra tabela (opcional). Não usar para relação de lineage/pipeline (Bronze→Silver→Gold) — isso é coberto por 'lineage' em mapeamento-tecnico.yaml.",
                   "properties": {
                     "tabela": {
                       "type": "string",

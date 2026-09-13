@@ -16,8 +16,9 @@ catalog/            Catálogo de produtos de dados por subdomínio (15 subdomín
     └── schema-fisico/               DDL, colunas, simulação de dados e banco mock (quando disponível)
 
 kb/                  Base de conhecimento com os conceitos fundamentais (DDD, Camada Medalhão, Core/Integration/Analytics)
-presentation/                Apresentação interativa (HTML, offline, zero build) gerada a partir do catálogo
+presentation/                Mapa interativo do parque de dados (HTML, offline, zero build) gerado a partir do catálogo
 scripts/             Scripts Python de build, validação, geração de DDL e simulação de dados
+docs/adr/            Registros de decisão arquitetural (ADR)
 ```
 
 Hoje, **Compras/Autorização** é o único subdomínio com mapeamento técnico completo (produtos → 29 tabelas físicas → DDL → simulação), servindo de piloto para os demais.
@@ -27,7 +28,8 @@ Hoje, **Compras/Autorização** é o único subdomínio com mapeamento técnico 
 - **Entender os conceitos**: [`kb/README.md`](kb/README.md)
 - **Ver o catálogo e como usá-lo**: [`catalog/README.md`](catalog/README.md)
 - **Adicionar/validar um subdomínio, mapeamento técnico ou schema físico**: [`catalog/_schema/README.md`](catalog/_schema/README.md)
-- **Ver a apresentação interativa**: [`presentation/README.md`](presentation/README.md)
+- **Ver o mapa interativo do parque de dados**: [`presentation/README.md`](presentation/README.md)
+- **Ver as decisões arquiteturais**: [`docs/adr/README.md`](docs/adr/README.md)
 
 ## Setup
 
@@ -47,8 +49,8 @@ python3 scripts/ddl_generator.py <slug>
 # Popular um mock.db (SQLite) com dados simulados
 python3 scripts/simulate_data.py --subdominio <slug> --n 50
 
-# Regenerar a apresentação interativa (presentation/apresentacao.html)
-python3 scripts/build_apresentacao.py
+# Regenerar o mapa do parque de dados (presentation/parque-de-dados.html)
+python3 scripts/build_mapa_parque_dados.py
 ```
 
 ## Subdomínios do domínio Cartão
