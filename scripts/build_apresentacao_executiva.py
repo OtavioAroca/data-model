@@ -5,8 +5,9 @@ catalog/index.yaml.
 
 Ferramenta separada do mapa do parque de dados (ver docs/adr/0008) — cobre a
 forma de modelar (DDD, Camada Medalhão, Core/Integration/Analytics),
-benefícios e um estudo de caso (Compras/Autorização), este último linkando
-presentation/parque-de-dados.html em vez de reconstruir o diagrama.
+benefícios e um estudo de caso (Compras/Autorização). O estudo de caso embute
+presentation/parque-de-dados.html via <iframe> (?compacto=1) em vez de
+reconstruir o diagrama (ver docs/adr/0010).
 
 Lê:
   catalog/index.yaml
@@ -57,17 +58,14 @@ def load_estudo_caso(slug):
 
     tabelas = mapeamento.get("tabelas_fisicas", [])
     contagem_camada = {}
-    tabelas_por_camada = {}
     for t in tabelas:
         camada = t["camada_medalhao"]
         contagem_camada[camada] = contagem_camada.get(camada, 0) + 1
-        tabelas_por_camada.setdefault(camada, []).append(t["tabela_fisica"])
 
     return {
         "produtos": produtos,
         "total_tabelas": len(tabelas),
         "contagem_camada": contagem_camada,
-        "tabelas_por_camada": tabelas_por_camada,
     }
 
 
