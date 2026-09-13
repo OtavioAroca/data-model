@@ -145,6 +145,13 @@
   .stats-row .stat strong { display: block; font-size: 16px; }
   .stats-row .stat span { font-size: 11px; color: var(--text-muted); }
 
+  .tabelas-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 0 0 24px; }
+  .tabelas-grupo { min-width: 0; }
+  .tabelas-grupo h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+  .tabelas-grupo ul { list-style: none; margin: 0; padding: 0; }
+  .tabelas-grupo li { font-family: ui-monospace, monospace; font-size: 12px; padding: 3px 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+  .tabelas-grupo li:last-child { border-bottom: none; }
+
   ul.produtos { list-style: none; margin: 0 0 20px; padding: 0; display: grid; gap: 8px; }
   ul.produtos li { border: 1px solid var(--border); background: var(--panel-bg); border-radius: 8px; padding: 10px 12px; }
   ul.produtos code { font-size: 12px; }
@@ -292,6 +299,9 @@
       <span class="stage gold">gold.integration__purchase_journey</span>
     </div>
     <div class="stats-row" id="stats-row"></div>
+
+    <h3 style="font-size:14px; margin-bottom:8px;">As 29 tabelas físicas do piloto</h3>
+    <div class="tabelas-grid" id="tabelas-grid"></div>
 
     <h3 style="font-size:14px; margin-bottom:8px;">Produtos de dados propostos</h3>
     <ul class="produtos" id="produtos-list"></ul>
@@ -585,6 +595,47 @@ const DATA = {
       "Silver L2": 2,
       "Silver": 2,
       "Gold": 11
+    },
+    "tabelas_por_camada": {
+      "Bronze": [
+        "bronze.purchases__credit_approved",
+        "bronze.purchases__credit_denied",
+        "bronze.purchases__credit_cancelled",
+        "bronze.purchases__credit_clearing",
+        "bronze.purchases__credit_processed",
+        "bronze.purchases__debit_approved",
+        "bronze.purchases__debit_denied",
+        "bronze.purchases__debit_cancelled",
+        "bronze.purchases__debit_clearing",
+        "bronze.purchases__debit_processed",
+        "bronze.purchases__credit_transaction",
+        "bronze.purchases__credit_transaction_type"
+      ],
+      "Silver L1": [
+        "silver_l1.purchases__credit_purchase",
+        "silver_l1.purchases__debit_purchase"
+      ],
+      "Silver L2": [
+        "silver_l2.purchases__credit_purchase",
+        "silver_l2.purchases__debit_purchase"
+      ],
+      "Silver": [
+        "silver.purchases__credit_transaction",
+        "silver.purchases__credit_transaction_type"
+      ],
+      "Gold": [
+        "gold.integration__purchase_journey",
+        "gold.analytics__extrato_cliente",
+        "gold.analytics__comportamento_gasto",
+        "gold.analytics__taxa_aprovacao_compra",
+        "gold.analytics__motivos_negacao_compra",
+        "gold.analytics__ranking_lojista_categoria",
+        "gold.analytics__adocao_parcelamento",
+        "gold.analytics__latencia_liquidacao_compra",
+        "gold.analytics__mix_canal",
+        "gold.analytics__gasto_internacional",
+        "gold.analytics__gasto_elegivel_rewards"
+      ]
     }
   }
 };
@@ -627,17 +678,29 @@ function renderProdutos() {
   `).join("");
 }
 
+const ORDEM_CAMADAS_MEDALHAO = ["Bronze", "Silver L1", "Silver L2", "Silver", "Gold"];
+
 function renderStats() {
-  const ordem = ["Bronze", "Silver L1", "Silver L2", "Silver", "Gold"];
   const contagem = DATA.estudo_caso.contagem_camada;
   const container = document.getElementById("stats-row");
   const stats = [{ label: "tabelas físicas", valor: DATA.estudo_caso.total_tabelas }]
-    .concat(ordem.filter(c => contagem[c]).map(c => ({ label: c, valor: contagem[c] })));
+    .concat(ORDEM_CAMADAS_MEDALHAO.filter(c => contagem[c]).map(c => ({ label: c, valor: contagem[c] })));
   container.innerHTML = stats.map(s => `
     <div class="stat"><strong>${s.valor}</strong><span>${s.label}</span></div>
   `).join("");
   document.getElementById("map-cta-text").textContent =
     `Para explorar as ${DATA.estudo_caso.total_tabelas} tabelas físicas, colunas, lineage e relações deste piloto interativamente:`;
+}
+
+function renderTabelas() {
+  const tabelasPorCamada = DATA.estudo_caso.tabelas_por_camada;
+  const container = document.getElementById("tabelas-grid");
+  container.innerHTML = ORDEM_CAMADAS_MEDALHAO.filter(c => tabelasPorCamada[c]).map(c => `
+    <div class="tabelas-grupo">
+      <h4>${c} (${tabelasPorCamada[c].length})</h4>
+      <ul>${tabelasPorCamada[c].map(nome => `<li><code>${nome}</code></li>`).join("")}</ul>
+    </div>
+  `).join("");
 }
 
 function setupScrollSpy() {
@@ -658,5 +721,6 @@ renderSubGrid();
 setupFilters();
 renderProdutos();
 renderStats();
+renderTabelas();
 setupScrollSpy();
 </script>

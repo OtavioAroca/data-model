@@ -35,11 +35,12 @@ três seções:
 - **Benefícios** — por que modelar dessa forma (Silver L1 vs L2, Integration,
   Analytics em português, alinhamento com bounded contexts, escalabilidade).
 - **Estudo de Caso** — narrativa do piloto Compras/Autorização (pipeline
-  Bronze→Silver L1/L2→Gold, contagem real de tabelas físicas por camada, os
-  13 produtos de dados propostos com descrição, ressalvas registradas nos
-  ADRs) com link para o mapa interativo — produtos e contagens lidos de
-  `catalog/compras-autorizacao/catalog.yaml` e `mapeamento-tecnico.yaml`, não
-  hardcoded no template.
+  Bronze→Silver L1/L2→Gold, contagem real de tabelas físicas por camada, o
+  **nome das 29 tabelas físicas** agrupado por camada medalhão, os 13
+  produtos de dados propostos com descrição, ressalvas registradas nos ADRs)
+  com link para o mapa interativo — produtos, contagens e nomes de tabela
+  lidos de `catalog/compras-autorizacao/catalog.yaml` e
+  `mapeamento-tecnico.yaml`, não hardcoded no template.
 
 ### Como Regenerar
 

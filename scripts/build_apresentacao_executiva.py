@@ -57,14 +57,17 @@ def load_estudo_caso(slug):
 
     tabelas = mapeamento.get("tabelas_fisicas", [])
     contagem_camada = {}
+    tabelas_por_camada = {}
     for t in tabelas:
         camada = t["camada_medalhao"]
         contagem_camada[camada] = contagem_camada.get(camada, 0) + 1
+        tabelas_por_camada.setdefault(camada, []).append(t["tabela_fisica"])
 
     return {
         "produtos": produtos,
         "total_tabelas": len(tabelas),
         "contagem_camada": contagem_camada,
+        "tabelas_por_camada": tabelas_por_camada,
     }
 
 

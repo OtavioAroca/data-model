@@ -145,6 +145,13 @@
   .stats-row .stat strong { display: block; font-size: 16px; }
   .stats-row .stat span { font-size: 11px; color: var(--text-muted); }
 
+  .tabelas-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 0 0 24px; }
+  .tabelas-grupo { min-width: 0; }
+  .tabelas-grupo h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+  .tabelas-grupo ul { list-style: none; margin: 0; padding: 0; }
+  .tabelas-grupo li { font-family: ui-monospace, monospace; font-size: 12px; padding: 3px 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+  .tabelas-grupo li:last-child { border-bottom: none; }
+
   ul.produtos { list-style: none; margin: 0 0 20px; padding: 0; display: grid; gap: 8px; }
   ul.produtos li { border: 1px solid var(--border); background: var(--panel-bg); border-radius: 8px; padding: 10px 12px; }
   ul.produtos code { font-size: 12px; }
@@ -293,6 +300,9 @@
     </div>
     <div class="stats-row" id="stats-row"></div>
 
+    <h3 style="font-size:14px; margin-bottom:8px;">As 29 tabelas físicas do piloto</h3>
+    <div class="tabelas-grid" id="tabelas-grid"></div>
+
     <h3 style="font-size:14px; margin-bottom:8px;">Produtos de dados propostos</h3>
     <ul class="produtos" id="produtos-list"></ul>
 
@@ -352,17 +362,29 @@ function renderProdutos() {
   `).join("");
 }
 
+const ORDEM_CAMADAS_MEDALHAO = ["Bronze", "Silver L1", "Silver L2", "Silver", "Gold"];
+
 function renderStats() {
-  const ordem = ["Bronze", "Silver L1", "Silver L2", "Silver", "Gold"];
   const contagem = DATA.estudo_caso.contagem_camada;
   const container = document.getElementById("stats-row");
   const stats = [{ label: "tabelas físicas", valor: DATA.estudo_caso.total_tabelas }]
-    .concat(ordem.filter(c => contagem[c]).map(c => ({ label: c, valor: contagem[c] })));
+    .concat(ORDEM_CAMADAS_MEDALHAO.filter(c => contagem[c]).map(c => ({ label: c, valor: contagem[c] })));
   container.innerHTML = stats.map(s => `
     <div class="stat"><strong>${s.valor}</strong><span>${s.label}</span></div>
   `).join("");
   document.getElementById("map-cta-text").textContent =
     `Para explorar as ${DATA.estudo_caso.total_tabelas} tabelas físicas, colunas, lineage e relações deste piloto interativamente:`;
+}
+
+function renderTabelas() {
+  const tabelasPorCamada = DATA.estudo_caso.tabelas_por_camada;
+  const container = document.getElementById("tabelas-grid");
+  container.innerHTML = ORDEM_CAMADAS_MEDALHAO.filter(c => tabelasPorCamada[c]).map(c => `
+    <div class="tabelas-grupo">
+      <h4>${c} (${tabelasPorCamada[c].length})</h4>
+      <ul>${tabelasPorCamada[c].map(nome => `<li><code>${nome}</code></li>`).join("")}</ul>
+    </div>
+  `).join("");
 }
 
 function setupScrollSpy() {
@@ -383,5 +405,6 @@ renderSubGrid();
 setupFilters();
 renderProdutos();
 renderStats();
+renderTabelas();
 setupScrollSpy();
 </script>
