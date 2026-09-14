@@ -15,6 +15,7 @@
     --layer-gold: #ca8a04;
     --edge-lineage: #3b82f6;
     --edge-relacional: #c026d3;
+    --danger: #dc2626;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -25,6 +26,7 @@
       --border: #2c313a;
       --edge-lineage: #60a5fa;
       --edge-relacional: #e879f9;
+      --danger: #f87171;
     }
   }
   :root[data-theme="dark"] {
@@ -35,6 +37,7 @@
     --border: #2c313a;
     --edge-lineage: #60a5fa;
     --edge-relacional: #e879f9;
+    --danger: #f87171;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
@@ -126,6 +129,8 @@
   .table-card.selected { stroke: var(--accent); stroke-width: 2.5; }
   .table-card.dimmed { opacity: 0.25; }
   .table-card.external { fill: transparent; stroke-dasharray: 4 3; opacity: 0.6; }
+  .table-card.impacted { stroke: var(--danger); stroke-width: 2.5; filter: drop-shadow(0 0 4px color-mix(in srgb, var(--danger) 55%, transparent)); }
+  .table-title.impacted { fill: var(--danger); }
   .table-title { font-size: 11px; font-weight: 600; fill: var(--text); pointer-events: none; }
   .table-sub { font-size: 9.5px; fill: var(--text-muted); pointer-events: none; }
 
@@ -135,6 +140,10 @@
   }
   .edge-lineage.dashflow { stroke-dasharray: 3 6; animation: dashflow 0.9s linear infinite; }
   .edge-lineage.dimmed { opacity: 0.08; filter: none; }
+  .edge-lineage.impacted, .edge-relacional.impacted {
+    stroke: var(--danger); opacity: 1;
+    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--danger) 65%, transparent));
+  }
   @keyframes dashflow { to { stroke-dashoffset: -18; } }
   .edge-relacional {
     fill: none; stroke: var(--edge-relacional); stroke-width: 1.6; stroke-linecap: round;
@@ -142,6 +151,7 @@
   }
   .edge-relacional.dimmed { opacity: 0.06; }
   .flow-dot { fill: var(--edge-lineage); filter: drop-shadow(0 0 3px color-mix(in srgb, var(--edge-lineage) 70%, transparent)); }
+  .flow-dot.impacted { fill: var(--danger); filter: drop-shadow(0 0 3px color-mix(in srgb, var(--danger) 70%, transparent)); }
 
   .table-card-group { cursor: grab; }
   .expand-toggle { cursor: pointer; }
@@ -2051,9 +2061,11 @@ let activeLayers = new Set();
 let activeProdutos = new Set();
 let activeCamadasProduto = new Set();
 let filterHidden = new Set();
+let impacted = new Set();
 
 // Mesmo grafo usado para desenhar as setas de lineage, na direção
-// upstream -> downstream, para propagar a ocultação por filtro.
+// upstream -> downstream, para propagar a ocultação por filtro e o
+// sinalizador de impacto (ver computeImpacted).
 const DOWNSTREAM_MAP = {};
 for (const t of mapa.tabelas) {
   for (const upstream of t.lineage_upstream) {
@@ -2063,7 +2075,7 @@ for (const t of mapa.tabelas) {
 
 function computeFilterHidden() {
   const hidden = new Set();
-  nodes.forEach(n => { if (!nodeActive(n)) hidden.add(n.id); });
+  nodes.forEach(n => { if (!nodeVisible(n)) hidden.add(n.id); });
   const queue = Array.from(hidden);
   while (queue.length) {
     const cur = queue.pop();
@@ -2075,6 +2087,28 @@ function computeFilterHidden() {
     });
   }
   return hidden;
+}
+
+// Desmarcar um produto no filtro não some com as tabelas dele — sinaliza em
+// vermelho a tabela e tudo que depende dela via lineage (cascata), pra
+// responder "se descontinuarmos esse produto, o que é afetado?" sem perder
+// o contexto de onde as dependências estão.
+function computeImpacted() {
+  const marked = new Set();
+  nodes.forEach(n => {
+    if (filterHidden.has(n.id)) return;
+    if (nodeDeselectedByProduto(n)) marked.add(n.id);
+  });
+  const queue = Array.from(marked);
+  while (queue.length) {
+    const cur = queue.pop();
+    (DOWNSTREAM_MAP[cur] || []).forEach(down => {
+      if (filterHidden.has(down) || marked.has(down)) return;
+      marked.add(down);
+      queue.push(down);
+    });
+  }
+  return marked;
 }
 
 let view = { x: 0, y: 0, k: 1 };
@@ -2225,6 +2259,7 @@ function pathBetween(a, b) {
 
 function render() {
   filterHidden = computeFilterHidden();
+  impacted = computeImpacted();
   svg.innerHTML = "";
   const defs = el("defs");
   defs.appendChild(el("marker", { id: "arrow-lineage", viewBox: "0 0 10 10", refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" },
@@ -2242,12 +2277,20 @@ function render() {
   applyTransform();
 }
 
-function nodeActive(n) {
+// Camadas e Core/Integration/Analytics escondem de fato (é um filtro de
+// escopo — "não quero ver isso"). Produto de dados não esconde: vira
+// sinalização de impacto (ver nodeDeselectedByProduto / computeImpacted),
+// porque desmarcar um produto aqui significa "e se ele deixasse de existir?".
+function nodeVisible(n) {
   if (!activeLayers.has(n.camada)) return false;
   if (n.externo) return true;
-  if (!activeProdutos.has(n.tabela.produto)) return false;
   if (!activeCamadasProduto.has(n.tabela.camada_produto)) return false;
   return true;
+}
+
+function nodeDeselectedByProduto(n) {
+  if (n.externo) return false;
+  return !activeProdutos.has(n.tabela.produto);
 }
 
 function edgeVisible(nomeA, nomeB) {
@@ -2255,6 +2298,10 @@ function edgeVisible(nomeA, nomeB) {
   if (!a || !b) return false;
   if (filterHidden.has(a.id) || filterHidden.has(b.id)) return false;
   return true;
+}
+
+function edgeImpacted(nomeA, nomeB) {
+  return impacted.has(nomeA) || impacted.has(nomeB);
 }
 
 function nodeMatchesSearch(n) {
@@ -2271,9 +2318,10 @@ function renderLineageEdges() {
       const a = nodeById[upstream], b = nodeById[t.nome];
       const id = `lineage-${i++}`;
       const dimmed = (searchTerm && !(nodeMatchesSearch(a) || nodeMatchesSearch(b))) ? " dimmed" : "";
-      const path = el("path", { id, class: "edge-lineage dashflow" + dimmed, d: pathBetween(a, b), "marker-end": "url(#arrow-lineage)", "data-from": upstream, "data-to": t.nome });
+      const impactedCls = edgeImpacted(upstream, t.nome) ? " impacted" : "";
+      const path = el("path", { id, class: "edge-lineage dashflow" + dimmed + impactedCls, d: pathBetween(a, b), "marker-end": "url(#arrow-lineage)", "data-from": upstream, "data-to": t.nome });
       g.appendChild(path);
-      const dot = el("circle", { r: 3, class: "flow-dot" });
+      const dot = el("circle", { r: 3, class: "flow-dot" + impactedCls });
       const anim = el("animateMotion", { dur: (2.4 + Math.random() * 1.2).toFixed(1) + "s", repeatCount: "indefinite" });
       const mpath = el("mpath");
       mpath.setAttributeNS("http://www.w3.org/1999/xlink", "href", "#" + id);
@@ -2291,8 +2339,9 @@ function renderRelationalEdges() {
     if (!edgeVisible(r.tabela_origem, r.tabela_destino)) continue;
     const a = nodeById[r.tabela_origem], b = nodeById[r.tabela_destino];
     const dimmed = (searchTerm && !(nodeMatchesSearch(a) || nodeMatchesSearch(b))) ? " dimmed" : "";
+    const impactedCls = edgeImpacted(r.tabela_origem, r.tabela_destino) ? " impacted" : "";
     const d = pathBetween(a, b);
-    g.appendChild(el("path", { class: "edge-relacional" + dimmed, d, "marker-end": "url(#arrow-relacional)", "data-from": r.tabela_origem, "data-to": r.tabela_destino }));
+    g.appendChild(el("path", { class: "edge-relacional" + dimmed + impactedCls, d, "marker-end": "url(#arrow-relacional)", "data-from": r.tabela_origem, "data-to": r.tabela_destino }));
   }
   rootG.appendChild(g);
 }
@@ -2303,15 +2352,16 @@ function renderNodes() {
     if (filterHidden.has(n.id)) continue;
     const dimmed = searchTerm && !nodeMatchesSearch(n);
     const selected = n.id === selectedId;
+    const isImpacted = impacted.has(n.id);
     const h = cardHeight(n);
     const group = el("g", { transform: `translate(${n.x},${n.y})`, class: "table-card-group" });
     group.appendChild(el("rect", {
       width: CARD_W, height: h,
-      class: "table-card" + (selected ? " selected" : "") + (dimmed ? " dimmed" : "") + (n.externo ? " external" : ""),
+      class: "table-card" + (selected ? " selected" : "") + (dimmed ? " dimmed" : "") + (n.externo ? " external" : "") + (isImpacted ? " impacted" : ""),
       stroke: n.externo ? LAYER_COLOR[n.camada] : undefined,
     }));
     group.appendChild(el("rect", { width: 5, height: h, fill: n.externo ? "transparent" : LAYER_COLOR[n.camada], rx: 2 }));
-    const title = el("text", { x: 14, y: 22, class: "table-title" }, document.createTextNode(n.curto));
+    const title = el("text", { x: 14, y: 22, class: "table-title" + (isImpacted ? " impacted" : "") }, document.createTextNode(n.curto));
     group.appendChild(title);
     if (n.externo) {
       group.appendChild(el("text", { x: 14, y: 38, class: "table-sub" }, document.createTextNode("externo — outro subdomínio")));
@@ -2641,6 +2691,12 @@ function montarLegenda() {
     item.appendChild(document.createTextNode(camada));
     container.appendChild(item);
   });
+  const impactItem = htmlEl("span", { class: "legend-item" });
+  const impactSwatch = htmlEl("span", { class: "legend-swatch" });
+  impactSwatch.style.background = "var(--danger)";
+  impactItem.appendChild(impactSwatch);
+  impactItem.appendChild(document.createTextNode("Impactado (produto desmarcado no filtro)"));
+  container.appendChild(impactItem);
 }
 
 document.getElementById("search-input").addEventListener("input", (e) => {

@@ -85,6 +85,7 @@
   .card p { margin: 0; color: var(--text-muted); }
   .card.medalhao { border-left-color: var(--layer-gold); }
   .card.cia { border-left-color: #9333ea; }
+  .card.risco { border-left-color: #dc2626; }
 
   .callout {
     background: var(--panel-bg);
@@ -94,11 +95,6 @@
     margin-bottom: 14px;
   }
   .callout strong { display: block; margin-bottom: 4px; }
-
-  table.disambig { width: 100%; border-collapse: collapse; margin-bottom: 28px; font-size: 13px; }
-  table.disambig th, table.disambig td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
-  table.disambig th { background: var(--panel-bg); font-weight: 700; }
-  table.disambig td { color: var(--text-muted); }
 
   .filter-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
   .filter-btn { border: 1px solid var(--border); background: var(--panel-bg); color: var(--text); border-radius: 999px; padding: 5px 12px; font-size: 12px; cursor: pointer; }
@@ -149,62 +145,61 @@
   ul.ressalvas li { margin-bottom: 6px; }
   ul.ressalvas a { color: var(--accent); }
 
+  .callout.aviso { border-left: 4px solid #dc2626; }
+  .callout.aviso strong { color: #dc2626; }
+
 </style>
 
 <header>
   <h1>Modelagem de Dados — Domínio Cartão</h1>
-  <p>Como pensamos em modelar, por que modelamos assim, e um exemplo de caso de uso (Compras/Autorização).</p>
+  <p>Uma proposta de como catalogar os produtos de dados do domínio Cartão, por que propomos assim, e o desenho detalhado de um piloto de referência (Compras/Autorização) — nada disso está implementado ainda.</p>
   <nav class="section-nav">
+    <a href="#resumo">Resumo</a>
     <a href="#modelagem">Forma de Modelar</a>
     <a href="#beneficios">Benefícios</a>
-    <a href="#estudo-caso">Estudo de Caso</a>
+    <a href="#estudo-caso">Piloto Proposto</a>
   </nav>
 </header>
 
 <main>
 
-  <!-- ===================== FORMA DE MODELAR ===================== -->
-  <section class="page-section" id="modelagem">
-    <h2><span class="kicker">Forma de Modelar</span>Três eixos de classificação, independentes entre si</h2>
-    <p class="lede">Cada produto de dados do domínio Cartão é classificado ao mesmo tempo por três lentes diferentes — a que negócio ele pertence, em que estágio de processamento está, e para quem foi moldado. Nenhuma das três decide as outras duas.</p>
-
+  <!-- ===================== RESUMO EXECUTIVO ===================== -->
+  <section class="page-section" id="resumo">
+    <h2><span class="kicker">Resumo Executivo</span>O problema, a proposta e a decisão necessária</h2>
     <div class="grid-3">
       <div class="card">
-        <h3>Domain-Driven Design (DDD)</h3>
-        <p>Organiza o domínio em <strong>bounded contexts</strong> (15 subdomínios do Cartão) e classifica cada um por importância estratégica: <strong>Core</strong> (diferencial competitivo), <strong>Support</strong> (necessário, não diferencial) ou <strong>Generic</strong> (solução de mercado).</p>
+        <h3>O problema</h3>
+        <p>Hoje não existe forma sistemática de saber, para uma tabela qualquer do parque de dados, quem é o dono, o que ela representa ou se pode ser usada com confiança numa decisão — descobrir isso depende de perguntar a quem talvez já não esteja mais no time.</p>
       </div>
+      <div class="card medalhao">
+        <h3>A proposta</h3>
+        <p>Uma forma de catalogar produtos de dados — dono, contrato, linhagem — subdomínio por subdomínio. Para testar se funciona num caso real, desenhamos em detalhe como <strong>Compras/Autorização</strong> ficaria: <span id="resumo-contagem"></span>. <strong>Nada disso está construído ainda</strong> — é o plano de referência a validar antes de implementar.</p>
+      </div>
+      <div class="card cia">
+        <h3>A decisão necessária</h3>
+        <p>Aprovar a construção real deste primeiro piloto, com apoio do time de Compras/Autorização para validar o desenho contra os sistemas de origem — e decidir qual subdomínio entra em seguida.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FORMA DE MODELAR ===================== -->
+  <section class="page-section" id="modelagem">
+    <h2><span class="kicker">Forma de Modelar</span>Dois eixos de classificação, independentes entre si</h2>
+    <p class="lede">Cada produto de dados do domínio Cartão é classificado ao mesmo tempo por duas lentes diferentes — em que estágio de processamento está, e para quem foi moldado. Nenhuma das duas decide a outra.</p>
+
+    <div class="grid-2">
       <div class="card medalhao">
         <h3>Camada Medalhão</h3>
         <p>Estrutura o data lake por estágio de processamento: <strong>Bronze</strong> (bruto), <strong>Silver</strong> (limpo — com a nuance L1 histórico / L2 estado atual) e <strong>Gold</strong> (pronto para consumo).</p>
       </div>
       <div class="card cia">
         <h3>Core / Integration / Analytics</h3>
-        <p>Classifica cada <strong>produto de dados</strong> pelo escopo: <strong>Core</strong> (1 bounded context), <strong>Integration</strong> (cruza ≥2 contextos) ou <strong>Analytics</strong> (moldado para um caso de uso final).</p>
+        <p>Classifica cada <strong>produto de dados</strong> pelo escopo: <strong>Core</strong> (1 subdomínio), <strong>Integration</strong> (cruza ≥2 subdomínios) ou <strong>Analytics</strong> (moldado para um caso de uso final).</p>
       </div>
     </div>
 
-    <div class="callout">
-      <strong>Atenção: "Core" significa duas coisas diferentes aqui</strong>
-      A mesma palavra aparece em dois dos três eixos, com significados distintos — evita confusão saber qual está em jogo. Na Camada Medalhão a palavra nem existe: os estágios são só Bronze/Silver/Gold.
-    </div>
-    <table class="disambig">
-      <thead><tr><th>Onde aparece</th><th>O que significa</th><th>Exemplo</th></tr></thead>
-      <tbody>
-        <tr>
-          <td>DDD — subdomínio</td>
-          <td>O bounded context é um diferencial competitivo do negócio.</td>
-          <td>Elegibilidade, Fraude, Compras/Autorização</td>
-        </tr>
-        <tr>
-          <td>Produto de dados</td>
-          <td>O produto representa exatamente 1 bounded context, sem cruzar com outros.</td>
-          <td><code>core_credit_purchase</code> (só crédito, sem débito)</td>
-        </tr>
-      </tbody>
-    </table>
-
     <h2 style="margin-top:8px;">Os 15 Subdomínios do Domínio Cartão</h2>
-    <p class="lede">Cada card é um bounded context: o que ele resolve, quem alimenta, e quais camadas de produto de dados (Core/Integration/Analytics) já têm produto proposto no catálogo.</p>
+    <p class="lede">Cada card é um subdomínio do negócio: o que ele resolve, quem alimenta, e quais camadas de produto de dados (Core/Integration/Analytics) já têm produto proposto no catálogo.</p>
     <div class="filter-bar" id="camada-filters">
       <button class="filter-btn active" data-filter="all">Todos</button>
       <button class="filter-btn" data-filter="Core">Core</button>
@@ -221,54 +216,66 @@
 
     <div class="grid-2">
       <div class="card benefit-card">
-        <h3>Alinhamento com o negócio</h3>
-        <p>Cada bounded context tem dono, linguagem própria e fronteira de responsabilidade claras — a estrutura técnica espelha a estrutura organizacional, em vez de competir com ela.</p>
+        <h3>Decisão não trava esperando alguém lembrar</h3>
+        <p>Cada subdomínio tem dono e fronteira de responsabilidade claros — a estrutura dos dados espelha quem no negócio responde por aquilo, em vez de exigir que alguém pergunte em algum chat quem sabe do assunto.</p>
       </div>
       <div class="card benefit-card">
-        <h3>Silver L1 e L2 não são redundância</h3>
-        <p>Manter histórico completo (L1) separado do estado atual materializado (L2) evita recalcular a regra de precedência de negócio a cada leitura. Auditoria lê L1; operação lê L2 — cada público paga só pelo custo que precisa.</p>
+        <h3>Auditoria e operação deixam de competir pelo mesmo dado</h3>
+        <p>Histórico completo (para quem precisa reconstituir o passado, como auditoria) fica separado do estado atual (para quem opera no dia a dia) — cada público lê a versão certa para o que precisa, sem recalcular nada nem esperar o outro.</p>
       </div>
       <div class="card benefit-card">
-        <h3>Integration evita integrações N×M</h3>
-        <p>Sem um produto Integration que padroniza schema entre bounded contexts, cada consumidor teria que cruzar os mesmos contextos de forma independente — N consumidores × M fontes. Um produto Integration resolve isso uma vez.</p>
+        <h3>Evita retrabalho duplicado entre times</h3>
+        <p>Sem um produto padronizado que cruza dois subdomínios, cada time que precisa da mesma combinação de dados faz esse cruzamento sozinho — com risco real de dois times chegarem a números diferentes para a mesma pergunta. Um produto compartilhado resolve isso uma vez, para todos.</p>
       </div>
       <div class="card benefit-card">
-        <h3>Analytics em português, Core/Integration em inglês</h3>
-        <p>Quem consome Analytics é risco, marketing, financeiro — não engenharia. Nomear em português remove uma tradução mental a cada consulta, sem abrir mão de convenção técnica onde o público é técnico.</p>
+        <h3>Quem decide não perde tempo traduzindo</h3>
+        <p>Risco, marketing e financeiro leem métricas de negócio em português, sem tradução mental a cada consulta — menos chance de erro de interpretação numa decisão que envolve dinheiro.</p>
       </div>
       <div class="card benefit-card">
-        <h3>Catálogo reduz descoberta ad-hoc</h3>
-        <p>Produto de dados = dono, contrato e consumidores documentados no catálogo — não uma tabela órfã que alguém precisa perguntar no chat quem mantém.</p>
+        <h3>Investimento é incremental, não tudo-ou-nada</h3>
+        <p>Cada subdomínio é independente no catálogo. Aprovar o próximo não exige reabrir ou re-validar os que já foram definidos — o risco de cada rodada de investimento é isolado.</p>
       </div>
-      <div class="card benefit-card">
-        <h3>Escala subdomínio por subdomínio</h3>
-        <p>Cada bounded context tem sua própria pasta de catálogo. Um novo time de domínio se integra adicionando a sua, sem reescrever o que já existe para os outros 14.</p>
+      <div class="card benefit-card risco">
+        <h3>Reduz risco de auditoria e compliance</h3>
+        <p>Sem contrato e linhagem documentados, uma tabela usada num relatório para o regulador não tem como provar de onde veio o dado — a defesa depende de investigação manual sob pressão, não de rastreabilidade automática.</p>
       </div>
     </div>
   </section>
 
   <!-- ===================== ESTUDO DE CASO ===================== -->
   <section class="page-section" id="estudo-caso">
-    <h2><span class="kicker">Estudo de Caso</span>Compras / Autorização</h2>
-    <p class="lede">Subdomínio Core escolhido como piloto por ser o mais crítico do fluxo de cartão: autoriza e captura toda transação, incluindo o parcelamento decidido no ato da compra.</p>
+    <h2><span class="kicker">Piloto Proposto</span>Compras / Autorização</h2>
+    <p class="lede">Subdomínio Core escolhido para o desenho de referência por ser o mais crítico do fluxo de cartão: autoriza e captura toda transação, incluindo o parcelamento decidido no ato da compra.</p>
 
-    <h3 style="font-size:14px; margin-bottom:8px;">Pipeline: Bronze → Silver L1/L2 → Gold</h3>
-    <p class="lede" style="margin-bottom:12px;">O piloto tem <strong>dois rails</strong> (crédito e débito), cada um com 5 tópicos Bronze de status (approved/denied/cancelled/clearing/processed) → Silver L1 (histórico) → Silver L2 (estado atual). O rail de crédito ainda tem duas tabelas Core adicionais para o detalhamento de parcelas (<code>credit_transaction</code>, <code>credit_transaction_type</code>). Os dois rails convergem em <code>gold.integration__purchase_journey</code>, que junto dos produtos Analytics soma as tabelas Gold.</p>
+    <div class="callout aviso">
+      <strong>Nada disto está implementado</strong>
+      O que segue é o desenho detalhado de como este subdomínio ficaria se construído seguindo esta metodologia — tabelas, produtos e linhagem propostos, não um sistema em produção. Serve para provar que o desenho é aplicável a um caso real antes de pedir aprovação para construí-lo de fato.
+    </div>
+
+    <h3 style="font-size:14px; margin-bottom:8px;">Pipeline proposto: Bronze → Silver L1/L2 → Gold</h3>
+    <p class="lede" style="margin-bottom:12px;">O desenho propõe <strong>dois rails</strong> (crédito e débito), cada um com 5 tópicos Bronze de status (approved/denied/cancelled/clearing/processed) → Silver L1 (histórico) → Silver L2 (estado atual). O rail de crédito ainda teria duas tabelas Core adicionais para o detalhamento de parcelas (<code>credit_transaction</code>, <code>credit_transaction_type</code>). Os dois rails convergiriam em <code>gold.integration__purchase_journey</code>, que junto dos produtos Analytics soma as tabelas Gold propostas.</p>
     <div class="stats-row" id="stats-row"></div>
 
-    <h3 style="font-size:14px; margin-bottom:8px;">As 29 tabelas físicas do piloto</h3>
-    <p class="lede" style="margin-bottom:12px;">Mesma ferramenta interativa do mapa do parque de dados, embutida aqui com as tabelas recolhidas — clique numa tabela para expandir colunas, tipos, lineage e relações, ou arraste/dê zoom como no mapa original.</p>
+    <h3 style="font-size:14px; margin-bottom:8px;">As 29 tabelas físicas propostas</h3>
+    <p class="lede" style="margin-bottom:12px;">Mesma ferramenta interativa do mapa do parque de dados, embutida aqui com as tabelas recolhidas — clique numa tabela para expandir colunas, tipos, lineage e relações, ou arraste/dê zoom como no mapa original. As tabelas mostradas são o desenho proposto, não tabelas existentes.</p>
     <iframe src="parque-de-dados.html?compacto=1" class="mapa-embed"
             title="Mapa interativo — Compras/Autorização" loading="lazy"></iframe>
+
+    <h3 style="font-size:14px; margin-bottom:8px;">Visão de produtos: o que depende do quê</h3>
+    <p class="lede" style="margin-bottom:12px;">O filtro <strong>"Produto de dados"</strong> no mapa acima não é só uma lista — desmarcar um produto sinaliza em vermelho, em cascata via linhagem, tudo que depende dele (tabelas e setas), sem esconder nada do contexto. É a pergunta que toda mudança de negócio levanta: "se pararmos de fazer X, o que é afetado?"</p>
+    <div class="callout aviso">
+      <strong>Exemplo real do piloto: e se saíssemos de débito?</strong>
+      Desmarcando <code>core_debit_purchase</code> no filtro acima, a cascata acende em vermelho <strong>18 das 29 tabelas</strong> — não só as 7 do rail de débito, mas <strong>12 dos 15 produtos</strong> do piloto: o Integration (<code>gold.integration__purchase_journey</code>) e <strong>todos os 10 produtos Analytics</strong>, porque vários leem direto de tabelas Silver de débito, sem passar pelo Integration. Só os 3 produtos exclusivos de crédito ficam de fora. Descontinuar débito <strong>não seria isolado</strong> — exigiria revisar quase todo o piloto antes de desligar qualquer tabela. Essa resposta só existe porque a linhagem está documentada; para os outros 14 subdomínios, essa mesma pergunta não tem resposta hoje.
+    </div>
 
     <h3 style="font-size:14px; margin-bottom:8px;">Produtos de dados propostos</h3>
     <ul class="produtos" id="produtos-list"></ul>
 
-    <h3 style="font-size:14px; margin-bottom:8px;">Ressalvas do piloto</h3>
+    <h3 style="font-size:14px; margin-bottom:8px;">Ressalvas da proposta</h3>
     <ul class="ressalvas">
-      <li>Só Compras/Autorização tem schema físico completo hoje — os outros 14 subdomínios ainda são placeholders no catálogo (<a href="../docs/adr/0001-escopo-detalhado-so-compras-autorizacao.md" target="_blank">ADR 0001</a>, <a href="../docs/adr/0006-mapa-sem-outros-subdominios-e-sem-chips-externos.md" target="_blank">ADR 0006</a>).</li>
+      <li>Só Compras/Autorização tem desenho técnico completo hoje (produtos → tabelas → DDL) — os outros 14 subdomínios ainda são catálogo conceitual, sem desenho de tabelas físicas (<a href="../docs/adr/0001-escopo-detalhado-so-compras-autorizacao.md" target="_blank">ADR 0001</a>, <a href="../docs/adr/0006-mapa-sem-outros-subdominios-e-sem-chips-externos.md" target="_blank">ADR 0006</a>).</li>
       <li>Relações estruturais (chaves estrangeiras) são declaradas sem cardinalidade explícita (<a href="../docs/adr/0003-fk-e-cardinalidade-explicitas-no-schema-fisico.md" target="_blank">ADR 0003</a>, <a href="../docs/adr/0005-fk-sem-cardinalidade-explicita.md" target="_blank">ADR 0005</a>).</li>
-      <li><code>integration_purchase_journey</code> ainda não inclui estorno/lineage de Disputas (<a href="../docs/adr/0007-integration-purchase-journey-sem-disputas.md" target="_blank">ADR 0007</a>).</li>
+      <li><code>integration_purchase_journey</code> ainda não prevê estorno/lineage de Disputas — mesmo no desenho proposto (<a href="../docs/adr/0007-integration-purchase-journey-sem-disputas.md" target="_blank">ADR 0007</a>).</li>
     </ul>
 
   </section>
@@ -564,7 +571,7 @@ function renderSubGrid() {
       <h4>${sub.nome}</h4>
       <div class="camada-tags">${sub.camadas_produto.map(c => `<span class="camada-tag ${camadaTagClass(c)}">${c}</span>`).join("")}</div>
       <p>${sub.bounded_context}</p>
-      <div class="origem">Origem: ${sub.sistemas_origem}${sub.tem_mapeamento_tecnico ? " · piloto com schema físico" : ""}</div>
+      <div class="origem">Origem: ${sub.sistemas_origem}${sub.tem_mapeamento_tecnico ? " · piloto com desenho técnico proposto" : ""}</div>
     </div>
   `).join("");
 }
@@ -582,6 +589,13 @@ function setupFilters() {
       });
     });
   });
+}
+
+function renderResumo() {
+  const el = document.getElementById("resumo-contagem");
+  if (!el) return;
+  const ec = DATA.estudo_caso;
+  el.textContent = `${ec.produtos.length} produtos de dados propostos, mapeados a ${ec.total_tabelas} tabelas físicas`;
 }
 
 function renderProdutos() {
@@ -617,6 +631,7 @@ function setupScrollSpy() {
   sections.forEach(section => section && observer.observe(section));
 }
 
+renderResumo();
 renderSubGrid();
 setupFilters();
 renderProdutos();
