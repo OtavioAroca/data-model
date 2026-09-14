@@ -2,9 +2,10 @@
 
 ## Status
 
-Proposto
+Aceito
 
-> Mesmo padrão dos ADRs 0008/0009 — atualizado neste arquivo até ser aceito.
+> Nasceu como `Proposto` (mesmo padrão dos ADRs 0008/0009) e foi aceito após
+> aprovação da [PR #13](https://github.com/OtavioAroca/data-model/pull/13).
 
 ## Contexto
 
