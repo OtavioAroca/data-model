@@ -2,12 +2,14 @@
 
 ## Status
 
-Proposto
+Aceito
 
-> Ajustes pedidos pelo usuário depois de revisar a apresentação executiva
-> gerada pela PR #9 — ainda em rodada de revisão, atualizado neste mesmo
-> arquivo até ser aceito (mesmo padrão do [ADR 0008](./0008-apresentacao-executiva-como-ferramenta-separada.md)
-> antes de virar `Aceito`).
+> Nasceu como `Proposto` (atualizado neste mesmo arquivo a cada rodada de
+> revisão) e foi aceito após aprovação da
+> [PR #12](https://github.com/OtavioAroca/data-model/pull/12). O ponto 5
+> (lista simples de nomes de tabela) foi depois superseded parcialmente pelo
+> [ADR 0010](./0010-mapa-interativo-embutido-no-estudo-de-caso.md) — os
+> pontos 1–4 continuam valendo como decididos aqui.
 
 ## Contexto
 
