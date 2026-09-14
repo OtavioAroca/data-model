@@ -122,9 +122,16 @@ Silver / Gold):
 - Busca por nome de tabela, três filtros suspensos (multi-seleção, todos
   marcados por padrão) — **Camadas**, **Produto de dados** e
   **Core/Integration/Analytics** — e legenda de cores por camada, na barra de
-  ferramentas. Ocultar uma camada no filtro também oculta (em cascata) tudo
-  que depende dela via lineage. Setas de lineage e relacional, e a animação
-  de fluxo, ficam sempre visíveis/ativas (sem toggle).
+  ferramentas. Ocultar uma camada ou Core/Integration/Analytics no filtro
+  também oculta (em cascata) tudo que depende disso via lineage. Setas de
+  lineage e relacional, e a animação de fluxo, ficam sempre visíveis/ativas
+  (sem toggle).
+- **Desmarcar um produto no filtro "Produto de dados" não esconde nada** —
+  em vez disso, sinaliza em vermelho (tabelas, título e setas) o produto e,
+  em cascata via lineage, tudo que depende dele. Responde "se
+  descontinuarmos esse produto, o que é afetado?" sem perder o contexto de
+  onde as dependências estão (ver legenda "Impactado" na barra de
+  ferramentas).
 - **`?compacto=1`** na URL abre todos os cartões recolhidos por padrão (em
   vez de expandidos) — usado ao embutir este mapa dentro de
   `apresentacao-executiva.html`. Sem o parâmetro, comportamento padrão
