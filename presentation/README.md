@@ -8,9 +8,12 @@ build, zero CDN, zero servidor):
 - [**Mapa do Parque de Dados**](#mapa-do-parque-de-dados) — diagrama
   interativo das tabelas físicas do piloto (Compras/Autorização).
 
-A apresentação executiva linka o mapa (botão "Abrir mapa interativo" na aba
-Estudo de Caso) em vez de reimplementar o diagrama — ver
-[`docs/adr/0008`](../docs/adr/0008-apresentacao-executiva-como-ferramenta-separada.md).
+A apresentação executiva **embute o mapa** (via `<iframe>`, tabelas
+recolhidas por padrão) na seção Estudo de Caso, além de linkar para abri-lo
+em tela cheia — reaproveita o arquivo já gerado por
+`scripts/build_mapa_parque_dados.py`, sem duplicar nada do motor de
+renderização SVG — ver
+[`docs/adr/0010`](../docs/adr/0010-mapa-interativo-embutido-no-estudo-de-caso.md).
 
 ---
 
@@ -35,11 +38,14 @@ três seções:
 - **Benefícios** — por que modelar dessa forma (Silver L1 vs L2, Integration,
   Analytics em português, alinhamento com bounded contexts, escalabilidade).
 - **Estudo de Caso** — narrativa do piloto Compras/Autorização (pipeline
-  Bronze→Silver L1/L2→Gold, contagem real de tabelas físicas por camada, os
-  13 produtos de dados propostos com descrição, ressalvas registradas nos
-  ADRs) com link para o mapa interativo — produtos e contagens lidos de
-  `catalog/compras-autorizacao/catalog.yaml` e `mapeamento-tecnico.yaml`, não
-  hardcoded no template.
+  Bronze→Silver L1/L2→Gold, contagem real de tabelas físicas por camada), o
+  **mapa interativo completo embutido** (`parque-de-dados.html?compacto=1`
+  via `<iframe>`, tabelas recolhidas por padrão — mesma busca, filtros,
+  pan/zoom, arrastar, legenda e painel lateral do mapa original), os 13
+  produtos de dados propostos com descrição, e ressalvas registradas nos
+  ADRs — com link para abrir o mapa em tela cheia. Contagens e produtos lidos
+  de `catalog/compras-autorizacao/catalog.yaml` e `mapeamento-tecnico.yaml`,
+  não hardcoded no template.
 
 ### Como Regenerar
 
@@ -59,7 +65,10 @@ tabelas físicas por camada medalhão) — injetando tudo em
 `apresentacao-executiva.template.html` e escrevendo
 `apresentacao-executiva.html`. O restante do conteúdo (conceitos,
 benefícios, texto introdutório do estudo de caso) é texto estático no
-template — editar o `.template.html` diretamente e regerar.
+template — editar o `.template.html` diretamente e regerar. O mapa embutido
+no iframe é o próprio `parque-de-dados.html` — se os YAMLs de catálogo
+mudarem, regenere também com `python3 scripts/build_mapa_parque_dados.py`
+(ver seção abaixo).
 
 ### Verificação
 
@@ -68,9 +77,12 @@ template — editar o `.template.html` diretamente e regerar.
    Caso) e confirme que a página rola até a seção correspondente, com o link
    ativo destacado.
 3. Teste o filtro Core/Integration/Analytics no grid de subdomínios.
-4. Clique em "Abrir mapa interativo" e confirme que `parque-de-dados.html`
-   abre em nova aba.
-5. Console do navegador (`F12`) sem erros de JS.
+4. Na seção Estudo de Caso, confirme que o mapa embutido carrega com as
+   tabelas recolhidas, que dá para clicar numa tabela e ver colunas/lineage
+   no painel lateral (dentro do iframe), e que "Abrir mapa interativo" abre
+   `parque-de-dados.html` em nova aba (expandido, comportamento padrão).
+5. Console do navegador (`F12`) sem erros de JS — na página principal e
+   dentro do iframe.
 
 ---
 
@@ -93,7 +105,13 @@ organizadas em colunas por camada medalhão (Bronze / Silver L1 / Silver L2 /
 Silver / Gold):
 
 - Clique em uma tabela para ver colunas, tipos, nullability, chave primária,
-  lineage (de onde vem / para onde vai) e relações.
+  lineage (de onde vem / para onde vai) e relações no painel lateral.
+- Cada cartão tem um botão de expandir/recolher (canto superior direito) que
+  mostra as colunas direto no cartão, sem precisar abrir o painel lateral —
+  abrem expandidos por padrão (exceto com `?compacto=1`, ver abaixo).
+  Cartões podem ser arrastados livremente; a rotina de resolução de colisão
+  reorganiza os vizinhos para não sobrepor. Botão "Reorganizar" volta todos
+  à posição/grade original.
 - **Setas azuis animadas** = lineage/pipeline (Bronze→Silver→Gold), com um
   ponto viajando ao longo da seta simulando o dado trafegando.
 - **Setas roxas tracejadas** = relação estrutural (chave estrangeira) — sem
@@ -101,11 +119,16 @@ Silver / Gold):
 - **Cartões pontilhados** ("externo — outro subdomínio") = tabelas citadas
   como fonte de lineage mas pertencentes a outro subdomínio, ainda sem schema
   físico neste catálogo.
-- Busca por nome de tabela e três filtros suspensos (multi-seleção, todos
+- Busca por nome de tabela, três filtros suspensos (multi-seleção, todos
   marcados por padrão) — **Camadas**, **Produto de dados** e
-  **Core/Integration/Analytics** — na barra de ferramentas. Setas de lineage
-  e relacional, e a animação de fluxo, ficam sempre visíveis/ativas (sem
-  toggle).
+  **Core/Integration/Analytics** — e legenda de cores por camada, na barra de
+  ferramentas. Ocultar uma camada no filtro também oculta (em cascata) tudo
+  que depende dela via lineage. Setas de lineage e relacional, e a animação
+  de fluxo, ficam sempre visíveis/ativas (sem toggle).
+- **`?compacto=1`** na URL abre todos os cartões recolhidos por padrão (em
+  vez de expandidos) — usado ao embutir este mapa dentro de
+  `apresentacao-executiva.html`. Sem o parâmetro, comportamento padrão
+  inalterado.
 
 ### Como Regenerar
 
@@ -135,6 +158,10 @@ relações, arestas de lineage, tabelas externas).
   (`stroke-dashoffset` + `<animateMotion>`) e layout implementados à mão.
 - Ferramenta independente da apresentação anterior deste repositório — ver
   [`docs/adr/0002`](../docs/adr/0002-ferramenta-nova-independente-da-apresentacao-anterior.md).
+  Desde o [`docs/adr/0010`](../docs/adr/0010-mapa-interativo-embutido-no-estudo-de-caso.md),
+  este arquivo também é embutido via `<iframe>` na apresentação executiva —
+  continua sendo o único lugar onde o diagrama é implementado (zero código
+  duplicado).
 
 ### Verificação
 

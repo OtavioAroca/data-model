@@ -2037,6 +2037,12 @@ function htmlEl(tag, attrs, text) {
 // ---------------------------------------------------------------------
 const mapa = DATA.mapas_detalhados[0];
 
+// ?compacto=1 na URL abre as tabelas recolhidas (sem colunas) por padrão —
+// usado ao embutir este mapa dentro de outra página (ver
+// presentation/apresentacao-executiva.template.html). Sem o parâmetro,
+// comportamento padrão inalterado (tabelas expandidas).
+const COMPACTO = new URLSearchParams(location.search).has("compacto");
+
 let nodes = [];       // {id, nome, curto, camada, tabela, externo}
 let nodeById = {};
 let selectedId = null;
@@ -2105,7 +2111,7 @@ function montarNodes() {
       n.y = ROW_Y0 + rowIdx * (CARD_H + ROW_GAP);
       n.gridX = n.x;
       n.gridY = n.y;
-      n.expanded = true;
+      n.expanded = !COMPACTO;
       nodes.push(n);
     });
   });
@@ -2646,7 +2652,7 @@ document.getElementById("reorganize-view").addEventListener("click", () => {
   nodes.forEach(n => {
     n.x = n.gridX;
     n.y = n.gridY;
-    n.expanded = true;
+    n.expanded = !COMPACTO;
   });
   resolverColisoes();
   render();

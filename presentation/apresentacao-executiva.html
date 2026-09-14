@@ -8,9 +8,6 @@
     --text-muted: #6b7280;
     --border: #e2e2e0;
     --accent: #2563eb;
-    --layer-bronze: #b45309;
-    --layer-silver-l1: #64748b;
-    --layer-silver-l2: #475569;
     --layer-gold: #ca8a04;
   }
   @media (prefers-color-scheme: dark) {
@@ -125,14 +122,6 @@
   .sub-card p { margin: 0 0 4px; color: var(--text-muted); font-size: 12px; }
   .sub-card .origem { font-size: 11px; color: var(--text-muted); }
 
-  .pipeline-flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0 22px; font-family: ui-monospace, monospace; font-size: 12px; }
-  .pipeline-flow .stage { border: 1px solid var(--border); background: var(--panel-bg); border-radius: 6px; padding: 6px 10px; }
-  .pipeline-flow .stage.bronze { border-left: 3px solid var(--layer-bronze); }
-  .pipeline-flow .stage.silver-l1 { border-left: 3px solid var(--layer-silver-l1); }
-  .pipeline-flow .stage.silver-l2 { border-left: 3px solid var(--layer-silver-l2); }
-  .pipeline-flow .stage.gold { border-left: 3px solid var(--layer-gold); }
-  .pipeline-flow .arrow { color: var(--text-muted); }
-
   .stats-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 24px; }
   .stats-row .stat {
     border: 1px solid var(--border);
@@ -144,6 +133,8 @@
   }
   .stats-row .stat strong { display: block; font-size: 16px; }
   .stats-row .stat span { font-size: 11px; color: var(--text-muted); }
+
+  .mapa-embed { width: 100%; height: 640px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 24px; display: block; }
 
   ul.produtos { list-style: none; margin: 0 0 20px; padding: 0; display: grid; gap: 8px; }
   ul.produtos li { border: 1px solid var(--border); background: var(--panel-bg); border-radius: 8px; padding: 10px 12px; }
@@ -281,17 +272,13 @@
     <p class="lede">Subdomínio Core escolhido como piloto por ser o mais crítico do fluxo de cartão: autoriza e captura toda transação, incluindo o parcelamento decidido no ato da compra.</p>
 
     <h3 style="font-size:14px; margin-bottom:8px;">Pipeline: Bronze → Silver L1/L2 → Gold</h3>
-    <p class="lede" style="margin-bottom:12px;">O piloto tem <strong>dois rails</strong> (crédito e débito), cada um com 5 tópicos Bronze de status (approved/denied/cancelled/clearing/processed) → Silver L1 (histórico) → Silver L2 (estado atual). O rail de crédito ainda tem duas tabelas Core adicionais para o detalhamento de parcelas (<code>credit_transaction</code>, <code>credit_transaction_type</code>). Os dois rails convergem em <code>gold.integration__purchase_journey</code>, que junto dos produtos Analytics soma as tabelas Gold. Exemplo do rail de crédito:</p>
-    <div class="pipeline-flow">
-      <span class="stage bronze">bronze.purchases__credit_approved</span>
-      <span class="arrow">→</span>
-      <span class="stage silver-l1">silver_l1.purchases__credit_purchase<br><small>(histórico, N por compra)</small></span>
-      <span class="arrow">→</span>
-      <span class="stage silver-l2">silver_l2.purchases__credit_purchase<br><small>(estado atual, 1 por compra)</small></span>
-      <span class="arrow">→</span>
-      <span class="stage gold">gold.integration__purchase_journey</span>
-    </div>
+    <p class="lede" style="margin-bottom:12px;">O piloto tem <strong>dois rails</strong> (crédito e débito), cada um com 5 tópicos Bronze de status (approved/denied/cancelled/clearing/processed) → Silver L1 (histórico) → Silver L2 (estado atual). O rail de crédito ainda tem duas tabelas Core adicionais para o detalhamento de parcelas (<code>credit_transaction</code>, <code>credit_transaction_type</code>). Os dois rails convergem em <code>gold.integration__purchase_journey</code>, que junto dos produtos Analytics soma as tabelas Gold.</p>
     <div class="stats-row" id="stats-row"></div>
+
+    <h3 style="font-size:14px; margin-bottom:8px;">As 29 tabelas físicas do piloto</h3>
+    <p class="lede" style="margin-bottom:12px;">Mesma ferramenta interativa do mapa do parque de dados, embutida aqui com as tabelas recolhidas — clique numa tabela para expandir colunas, tipos, lineage e relações, ou arraste/dê zoom como no mapa original.</p>
+    <iframe src="parque-de-dados.html?compacto=1" class="mapa-embed"
+            title="Mapa interativo — Compras/Autorização" loading="lazy"></iframe>
 
     <h3 style="font-size:14px; margin-bottom:8px;">Produtos de dados propostos</h3>
     <ul class="produtos" id="produtos-list"></ul>
@@ -304,7 +291,7 @@
     </ul>
 
     <div class="map-cta-wrap">
-      <p id="map-cta-text">Para explorar as tabelas físicas, colunas, lineage e relações deste piloto interativamente:</p>
+      <p id="map-cta-text">Prefere tela cheia? Abra o mapa interativo em outra aba:</p>
       <a class="map-cta" href="parque-de-dados.html" target="_blank" rel="noopener">Abrir mapa interativo →</a>
     </div>
   </section>
@@ -627,17 +614,16 @@ function renderProdutos() {
   `).join("");
 }
 
+const ORDEM_CAMADAS_MEDALHAO = ["Bronze", "Silver L1", "Silver L2", "Silver", "Gold"];
+
 function renderStats() {
-  const ordem = ["Bronze", "Silver L1", "Silver L2", "Silver", "Gold"];
   const contagem = DATA.estudo_caso.contagem_camada;
   const container = document.getElementById("stats-row");
   const stats = [{ label: "tabelas físicas", valor: DATA.estudo_caso.total_tabelas }]
-    .concat(ordem.filter(c => contagem[c]).map(c => ({ label: c, valor: contagem[c] })));
+    .concat(ORDEM_CAMADAS_MEDALHAO.filter(c => contagem[c]).map(c => ({ label: c, valor: contagem[c] })));
   container.innerHTML = stats.map(s => `
     <div class="stat"><strong>${s.valor}</strong><span>${s.label}</span></div>
   `).join("");
-  document.getElementById("map-cta-text").textContent =
-    `Para explorar as ${DATA.estudo_caso.total_tabelas} tabelas físicas, colunas, lineage e relações deste piloto interativamente:`;
 }
 
 function setupScrollSpy() {

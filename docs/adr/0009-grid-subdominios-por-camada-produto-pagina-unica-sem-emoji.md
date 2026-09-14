@@ -33,6 +33,12 @@ o usuário revisou a apresentação executiva gerada e pediu quatro ajustes:
    "Produtos de dados propostos" citava só 3 dos 13 produtos do catálogo,
    resumindo o resto como "e outros". O usuário sinalizou que faltavam
    tabelas.
+5. Depois de uma primeira correção do ponto 4 (produtos completos + linha de
+   estatísticas com a contagem real de tabelas por camada), o usuário ainda
+   viu tabelas faltando — a contagem por camada não bastava, faltava o
+   **nome de cada uma das 29 tabelas físicas**. Confirmado via pergunta
+   direta: o pedido é listar os nomes, não expandir o diagrama nem
+   reconstruir o explorador interativo.
 
 ## Decisão
 
@@ -76,6 +82,14 @@ o usuário revisou a apresentação executiva gerada e pediu quatro ajustes:
     já decidiram evitar. O texto acima do diagrama agora descreve os dois
     rails (crédito e débito) e as tabelas de parcelamento por extenso, e o
     CTA para o mapa interativo usa a contagem real de tabelas.
+  - Abaixo da linha de estatísticas, uma lista textual com o **nome de cada
+    uma das 29 tabelas físicas**, agrupada por camada medalhão (Bronze,
+    Silver L1, Silver L2, Silver, Gold), lida de
+    `mapeamento-tecnico.yaml.tabelas_fisicas` (`DATA.estudo_caso.tabelas_por_camada`,
+    calculada no mesmo loop que já produzia `contagem_camada`). É uma lista
+    simples (nome da tabela, sem colunas/tipos/lineage/relações) — a
+    exploração desses detalhes continua só no mapa interativo, mantendo a
+    decisão de não reconstruir o explorador aqui.
 
 ## Consequências
 
@@ -97,3 +111,11 @@ o usuário revisou a apresentação executiva gerada e pediu quatro ajustes:
   caso — se esse arquivo mudar de forma (ex: `tabelas_fisicas` renomeado), o
   build da apresentação executiva quebra junto com o do mapa
   (`build_mapa_parque_dados.py`), que já lê o mesmo arquivo.
+- A lista de nomes de tabela precisou de `min-width: 0` no item de grid
+  (`.tabelas-grupo`) e `overflow-wrap: anywhere` no texto (`.tabelas-grupo
+  li`) — nomes como `silver_l1.purchases__credit_purchase` não têm espaço
+  (uma "palavra" só para o algoritmo de quebra de linha do navegador), e o
+  comportamento padrão de `min-width: auto` em itens de CSS Grid expande a
+  coluna para caber o conteúdo inteiro sem quebrar, causando sobreposição
+  entre colunas vizinhas. Vale lembrar disso se outra lista de identificadores
+  longos (sem espaço) for adicionada a um grid neste template no futuro.
