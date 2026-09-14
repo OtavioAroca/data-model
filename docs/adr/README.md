@@ -28,6 +28,7 @@ supersede o anterior (linkando de volta), preservando o histórico de raciocíni
 | [0008](./0008-apresentacao-executiva-como-ferramenta-separada.md) | Apresentação executiva como ferramenta separada, linkando o mapa do parque de dados | Superseded parcialmente por [0009](./0009-grid-subdominios-por-camada-produto-pagina-unica-sem-emoji.md) |
 | [0009](./0009-grid-subdominios-por-camada-produto-pagina-unica-sem-emoji.md) | Grid de subdomínios por camada de produto (Core/Integration/Analytics), página única, sem emojis, estudo de caso completo | Superseded parcialmente por [0010](./0010-mapa-interativo-embutido-no-estudo-de-caso.md) |
 | [0010](./0010-mapa-interativo-embutido-no-estudo-de-caso.md) | Mapa interativo embutido no Estudo de Caso; template do mapa reconciliado com o arquivo gerado | Aceito |
+| [0011](./0011-apresentacao-executiva-largura-maxima-1440px.md) | Apresentação executiva com largura máxima de 1440px (era 980px) | Aceito |
 
 ## Quando criar um novo ADR
 
